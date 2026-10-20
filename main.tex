@@ -95,7 +95,7 @@ Collecting over all $(n, m)$ gives the $N\times M$ \underline{spatio-temporal st
 \subsubsection{The Received Signal}
 The received signal for a single range gate is an $N\times M$ slice of the data cube, $$\m X = \alpha\m S + \m C + \m N,$$ where $\m S=\vb s_\text{sp}\vb s_\text{temp}^T$ is the target spatio-temporal steering matrix, $\m C$ is the clutter return, $\m N$ is the thermal noise and $\alpha$ is the (complex) target amplitude.\\
 
-Vectorising by stacking the columns gives the length $L=NM$ received vector $$\vb x = \operatorname{vec}(\vb X) = \alpha\,\vb s + \vb c + \vb n,\qquad \vb s = \operatorname{vec}(\vb S) = \vb s_\text{temp}\otimes\vb s_\text{sp},$$ where $\vb s$ is the space-time \underline{steering vector}, $\vb c = \operatorname{vec}(\m C)$ and $\vb n = \operatorname{vec}(\m N)$. Writing the clutter-plus-noise (interference) as $\vv{\varsigma}=\vb c+\vb n$, $$\vb x = \alpha\,\vb s + \vv{\varsigma}.$$
+Vectorising by stacking the columns gives the length $L=NM$ received vector $$\vb x = \operatorname{vec}(\m X) = \alpha\,\vb s + \vb c + \vb n,\qquad \vb s = \operatorname{vec}(\m S) = \vb s_\text{temp}\otimes\vb s_\text{sp},$$ where $\vb s$ is the space-time \underline{steering vector}, $\vb c = \operatorname{vec}(\m C)$ and $\vb n = \operatorname{vec}(\m N)$. Writing the clutter-plus-noise (interference) as $\vv{\varsigma}=\vb c+\vb n$, $$\vb x = \alpha\,\vb s + \vv{\varsigma}.$$
 
 Vectorising lets us treat the joint space--time snapshot with standard vector
 detection theory, where a single $L\times L$ covariance matrix captures all spatial,
@@ -223,7 +223,7 @@ with the supervisor.
 
 
 \newpage
-\section{Supporting Concepts}
+\section{Appendix: Supporting Concepts}
 \subsection{Optimal Linear Filter: The \Gls{wmf}}
 \label{app:wmf}
 We seek the linear filter $\vb w$ that best detects a target $\alpha\vb s$ in interference $\vv{\varsigma}$ of covariance $\vb R = \bb E[\vv{\varsigma}\,\vv{\varsigma}^H]$, from the received vector $\vb x = \alpha\vb s + \vv{\varsigma}$.
@@ -289,16 +289,49 @@ $\mathrm{Cov}(\m R^{-1/2}\vv\varsigma)=\m R^{-1/2}\m R\,\m R^{-1/2}
   giving the adaptive matched filter $|\vb s^H\hat{\vb R}^{-1}\vb x|^2$.
 \end{itemize}
 
-\subsection{\gls{cpi}}
-
-
 \newpage
-\section{Questions, To-Do}
+\section{Action}
+\subsection{Questions}
 \begin{itemize}
     \item Are we doing multichannel space-time framing (like Ingara, $L = MN$) or the single-channel temporal one (like IPIX)?
-    \item In Aboutanios 2020, we assume the speckle covariance matrix $G$ is constant across cells? Do I take this assumption too and try to estimate this constant $G$ or do I try to find varying $G$, then still use the TEN. For example, if I segment the range of $G$'s into groups where they are approximately equal, to get the texture estimate, and then to the optimum detector.
-    \item In Aboutanios 2020, it is K-distributed clutter only. So we would look at the OKD detector in the Gini 1998 paper? Yes
+    \item In Aboutanios 2020, we assume the speckle covariance matrix $\m G$ is constant across cells? Do I take this assumption too and try to estimate this constant $\m G$ or do I try to find varying $\m G$, then still use the \gls{ten}. For example, if I segment the range of $\m G$'s into groups where they are approximately equal, to get the texture estimate, and then to the optimum detector. i.e. Shared-$\m G$ scope: do I (a) estimate a single shared $\m G$ accurately (keeping homogeneity), or (b) relax it to a spatially-varying / piecewise-homogeneous $\m G$?
+    \item In Aboutanios 2020, it is K-distributed clutter only. So we would look at the \gls{okd} detector in the Gini 1998 paper? \textcolor{red}{Yes}
+    \item Which speckle-covariance estimator(s) should I start from --- \gls{scm}, \gls{nscm}, fixed-point/approximate-\gls{ml} (Tyler, Conte--De Maio--Ricci), or a structured/regularised form?
+    \item Data: simulated only, or do I get access to real sea-clutter data (Ingara / DST)? Any access constraints?
+    \item Which baselines and metrics should I target (\gls{amf}, \gls{namf}, clairvoyant \gls{okd}; $P_d$ vs \gls{sinr}/\gls{scr} at a fixed $P_{fa}$)?
 \end{itemize}
 
+\subsection{To-Do}
+\subsubsection{Confirm / Waiting:}
+\begin{itemize}
+    \item Receive Melvin's clutter-model paper from Elias (before coding the simulation).
+\end{itemize}
+
+\subsubsection{Reading:}
+\begin{itemize}
+    \item Work through Gini (1998), Gini \& Greco (2002), Aboutanios \& Rosenberg (2020) in depth; keep notes in this workbook.
+    \item Read the speckle-covariance-estimation literature: fixed-point / approximate-\gls{ml} (Conte--De Maio--Ricci; Pascal et al.), Tyler's estimator, and regularised approaches (e.g.\ SCoRE).
+    \item Read Melvin's \gls{stap} clutter-model paper once received.
+\end{itemize}
+
+\subsubsection{Code:}
+\begin{itemize}
+    \item Build a K-distributed clutter $+$ noise simulator producing the $N\times M\times N_r$ data cube (Melvin model), parameterised by \gls{cnr}, shape $a$, \gls{prf}, $v_p$, etc.
+    \item Implement the Gaussian baselines: \gls{amf} and \gls{namf}.
+    \item Implement the clairvoyant \gls{okd} (Gini) with known $\m G$ and $\tau$.
+    \item Reproduce a known result (e.g.\ a $P_d$-vs-\gls{sinr} curve from Aboutanios 2020 or Gini 1998) as a correctness check.
+    \item Implement candidate speckle-covariance estimators (\gls{scm}, \gls{nscm}, fixed-point) and test estimation accuracy on simulated clutter.
+    \item Set up a Monte-Carlo evaluation harness ($P_{fa}$ calibration, $P_d$ curves).
+\end{itemize}
+
+\subsubsection{Writing:}
+\begin{itemize}
+    \item Keep the workbook updated (derivations, literature notes).
+    \item Draft outline for the Thesis A preliminary report.
+    \item \textcolor{red}{End of W5:} Submit short summary (50-100 words) about your thesis work, e.g. what is the problem? How are you going to solve it? What are the challenges? 
+\end{itemize}
+
+\paragraph{Short Summary.}
+Traditional target detectors can perform poorly when clutter is non-Gaussian and heterogeneous, violating their underlying assumptions. The optimum detector for K-distributed clutter is known but assumes the clutter statistics (texture and speckle covariance) are separately available, which is not the case in practice. This thesis builds on existing texture-estimation methods to investigate whether a practical form of the optimum detector can be realised and to assess its performance against traditional detectors. The main challenge is that these statistics are not directly observable from data, so it must be established whether they can be estimated accurately enough for the detector to be practical.
 
 \end{document}
