@@ -119,11 +119,7 @@ In practice $\vb R$ is unknown and must be estimated from data -- typically a sa
 Because the platform moves at velocity $v_p$, a stationary clutter patch at angle $\theta$ has a non-zero relative radial velocity equal to the projection of $v_p$ onto the line of sight, $v_r(\theta)=v_p\sin\theta$. Its Doppler is therefore $$f_{d,\text{clutter}} = \frac{2 v_p \sin\theta}{\lambda}\,T_r \;\propto\; \sin\theta.$$ But the spatial frequency is also $f_s=(d/\lambda)\sin\theta\propto\sin\theta$, so clutter maps to a \underline{straight line} in the angle--Doppler
 $(f_s,f_d)$ plane --- the \underline{clutter ridge} --- with slope
 $$\beta = \frac{f_{d,\text{clutter}}}{f_s} = \frac{2 v_p T_r}{d}.$$
-A moving target generally has an additional radial velocity of its own, so it
-falls \emph{off} the ridge (Figure~\ref{fig:clutter_ridge}). This is precisely
-why joint angle--Doppler (\Gls{stap}) processing is needed: clutter and a slow
-target may share the same angle \emph{or} the same Doppler, but they separate in
-the two-dimensional plane.
+A moving target generally has an additional radial velocity of its own, so it falls \emph{off} the ridge (Figure~\ref{fig:clutter_ridge}). This is precisely why joint angle--Doppler (\Gls{stap}) processing is needed: clutter and a slow target may share the same angle \emph{or} the same Doppler, but they separate in the two-dimensional plane.
 
 \begin{figure}[h]
     \centering
@@ -132,95 +128,207 @@ the two-dimensional plane.
     \label{fig:clutter_ridge}
 \end{figure}
 
-Because the clutter is confined to this ridge, it occupies a low-dimensional
-subspace of the $L=NM$ space--time space. Brennan's rule estimates the clutter
-rank as
-$$r \approx N + \beta(M-1) \ll NM,$$
-which is the basis for reduced-rank clutter suppression.
+Because the clutter is confined to this ridge, it occupies a low-dimensional subspace of the $L=NM$ space--time space. Brennan's rule estimates the clutter rank as $$r \approx N + \beta(M-1) \ll NM,$$ which is the basis for reduced-rank clutter suppression.
 
 \newpage
 \section{Detection and Statistical Theory}
+\label{2}
 \subsection{Hypothesis Test $H_0/H_1$}
-The target detection problem is generally formulated as a hypothesis test with the null hypothesis, $H_0$ being that the target is not present and the alternative hypothesis $H_1$ being that the target is present. The following test statistic $y$ is formed and compared to a suitable threshold, $\gamma$,
+The target detection problem is generally formulated as a binary hypothesis test with the null hypothesis, $H_0$, being that the target is not present and the alternative hypothesis, $H_1$, being that the target is present. For the \gls{cut}, the two hypotheses correspond to the received vector
+\begin{align}
+    H_0&:\quad \vb x = \vv\varsigma, \nonumber\\
+    H_1&:\quad \vb x = \alpha\vb s + \vv\varsigma, \nonumber
+\end{align}
+where $\vv\varsigma = \vb c + \vb n$ is the clutter-plus-noise interference, $\vb s$ is the known space--time steering vector and $\alpha$ is the unknown complex target amplitude. Detection amounts to deciding, from the single observation $\vb x$, which hypothesis holds.
+
+A detector reduces the observation to a scalar \underline{test statistic} $y$, which is compared to a suitable \underline{threshold} $\gamma$, $$y \;\underset{H_0}{\overset{H_1}{\gtrless}}\; \gamma,$$ so that $H_1$ is declared (a detection) when $y\ge\gamma$ and $H_0$ otherwise. Designing a detector means choosing how $y$ is formed from $\vb x$; the threshold $\gamma$ then sets the operating point.
+
+\subsection{Detection and False-Alarm Probabilities}
+Because $\vb x$ is random, the decision can be wrong in two ways. The performance of any detector is characterised by
+\begin{align}
+    P_{fa} &= \Pr(y\ge\gamma \mid H_0), \nonumber\\
+    P_{d}  &= \Pr(y\ge\gamma \mid H_1), \nonumber
+\end{align}
+the \underline{probability of false alarm} (declaring a target when none is present) and the \underline{probability of detection} (correctly declaring a present target); the probability of a missed detection is $P_m = 1-P_d$. Both are set by the same threshold: raising $\gamma$ lowers $P_{fa}$ but also lowers $P_d$, so they cannot be minimised simultaneously. Sweeping $\gamma$ traces the \gls{roc}, the curve of $P_d$ against $P_{fa}$, which characterises the detector independently of any single threshold.
+
+\subsection{The Likelihood Ratio}
+Since $P_d$ and $P_{fa}$ cannot both be made arbitrarily small, radar detection adopts the \gls{np} criterion: fix the false-alarm probability at an acceptable level and maximise $P_d$ subject to that constraint. The solution to the hypothesis test is the \underline{likelihood ratio}, in which the test statistic is formed as the ratio of the data likelihoods under the two hypotheses,
+$$y = \frac{f_{\vb x}(\vb x\mid H_1)}{f_{\vb x}(\vb x\mid H_0)}
+   \;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma,$$
+where $f_{\vb x}(\vb x\mid H_n)$ is the received-signal likelihood under the $n$th hypothesis. This statistic is optimal in the \gls{np} sense: no other function of $\vb x$ attains a higher $P_d$ at the same $P_{fa}$. Every detector that follows is, exactly or approximately, a \gls{lrt}.
+
+\subsection{The Likelihood Ratio for Gaussian Interference}
+\label{2.4}
+Suppose the interference is zero-mean Gaussian with known covariance $\vb R$, i.e.\ $\vv\varsigma\sim\mathcal{CN}(\vb 0,\vb R)$, and the target amplitude $\alpha$ is known. The two likelihoods are
+\begin{align}
+    f_{\vb x}(\vb x\mid H_0) &= \frac{1}{\pi^L\det\vb R}
+        \exp\!\left(-\vb x^H\vb R^{-1}\vb x\right), \nonumber\\
+    f_{\vb x}(\vb x\mid H_1) &= \frac{1}{\pi^L\det\vb R}
+        \exp\!\left(-(\vb x-\alpha\vb s)^H\vb R^{-1}(\vb x-\alpha\vb s)\right), \nonumber
+\end{align}
+as derived in Appendix~\ref{app:gausslik}. The normalising constants cancel in the log-likelihood  ratio, leaving
+\begin{align}
+    \ln y
+    &= \vb x^H\vb R^{-1}\vb x - (\vb x-\alpha\vb s)^H\vb R^{-1}(\vb x-\alpha\vb s)
+       \nonumber\\
+    &= 2\,\mathrm{Re}\{\alpha^*\,\vb s^H\vb R^{-1}\vb x\}
+       - |\alpha|^2\,\vb s^H\vb R^{-1}\vb s. \nonumber
+\end{align}
+The only data-dependent term is $\mathrm{Re}\{\alpha^*\,\vb s^H\vb R^{-1}\vb x\}$, so the \gls{wmf} $\vb s^H\vb R^{-1}\vb x$ is a \underline{sufficient statistic} (Appendix~\ref{app:wmf}). When the phase of $\alpha$ is unknown, as is usual, the test depends on the data only through the magnitude, giving the matched-filter detection statistic
+$$y = |\vb s^H\vb R^{-1}\vb x|^2
+   \;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma.$$
+This is the optimal (\gls{np}) detector for a known target in Gaussian interference of known covariance, and it is the benchmark from which the practical detectors of the following section depart.
+
+\subsection{Unknown Parameters: the Generalised Likelihood Ratio Test}
+The clean likelihood ratio above assumes the target amplitude $\alpha$ and the interference covariance $\vb R$ are known. In practice neither is: $\alpha$ is precisely what we are testing for, and $\vb R$ must be learned from data. The hypotheses are then \underline{composite} --- each spans a family of distributions indexed by the unknown parameters --- and the simple likelihood ratio no longer applies directly.
+
+The standard remedy is the \gls{glrt}: replace each unknown parameter by its \gls{mle} under each hypothesis,
+$$y_{G} = \frac{\displaystyle\max_{\alpha}\,
+                 f_{\vb x}(\vb x\mid H_1,\alpha,\vb R)}
+                {f_{\vb x}(\vb x\mid H_0,\vb R)},$$
+with $\vb R$ itself replaced by an estimate $\hat{\vb R}_t$ formed from \underline{secondary data} --- target-free training range gates surrounding the \gls{cut}. Different modelling assumptions and different estimates $\hat{\vb R}_t$ yield the different adaptive detectors of the following section
+(the \gls{amf}, the \gls{namf} and Kelly's \gls{glrt}). The \gls{glrt} is the bridge from the idealised optimal detector to a realisable one --- and it is exactly where estimating the clutter statistics, the central problem of this work, enters.
+
+\subsection{The \acrshort{cfar} Property}
+A usable detector must hold its false-alarm rate fixed even though the interference power is unknown and varies across the scene. A detector whose $P_{fa}$ does not depend on the unknown interference parameters is said to have the \gls{cfar} property. It is obtained by \underline{normalising} the test statistic by an estimate of the local interference power, so that the statistic's distribution
+under $H_0$ --- and hence the threshold needed for a given $P_{fa}$ --- is invariant to that power. CFAR behaviour is especially important in compound-Gaussian sea clutter, where the texture $\tau$ makes the local power swing strongly from cell to cell; normalised detectors such as the \gls{namf} and the \gls{ten} detector are motivated by precisely this requirement.
 
 \newpage
 \section{Traditional Detectors}
+As established in the previous section, the optimal detector in Gaussian interference is the matched filter $|\vb s^H\vb R^{-1}\vb x|^2$, but it requires the interference covariance $\vb R$, which is unknown in practice. A \underline{traditional} detector is obtained by replacing $\vb R$ with an estimate $\hat{\vb R}_t$ formed from \underline{secondary (training) data}. The detectors below --- the \gls{amf} and the \gls{namf} --- are the resulting Gaussian, homogeneous-clutter baselines against which this work is compared.
+
+\subsection{Secondary Data and the Sample Covariance Matrix}
+The covariance is estimated from a set of training range gates surrounding the \gls{cut}, assumed to be target-free and to share the \gls{cut}'s interference statistics. If the \gls{cut} has index $k$, the $L\times K_t$ training-data matrix is formed from the $K_t$ neighbouring gates, excluding the \gls{cut} itself,
+$$\tilde{\m Z}_k = \left[\,\vb z_{k-K_t/2},\ \ldots,\ \vb z_{k-1},\ \vb z_{k+1},\
+   \ldots,\ \vb z_{k+K_t/2}\,\right],$$
+where each column $\vb z_i$ is the vectorised snapshot of range gate $i$. The \gls{scm} is then
+$$\hat{\m R}_t = \frac{1}{K_t}\,\tilde{\m Z}_k\tilde{\m Z}_k^H,$$
+the subscript $t$ denoting that it is built from training data. Under the Gaussian, homogeneous assumption the \gls{scm} is the \gls{mle} of $\vb R$. Its quality is governed by the sample support $K_t$: the \gls{rmb} rule gives $K_t\approx 2L$ for an average loss of about $3$~dB in \gls{sinr} relative to the known-$\vb R$ matched filter, so a large, homogeneous training set is needed for the estimate to be accurate.
+
+\subsection{The Adaptive Matched Filter}
+Replacing $\vb R$ by $\hat{\m R}_t$ in the matched filter and normalising gives the \gls{amf} detection statistic
+$$y_{\text{AMF}} = \frac{|\vb s^H\hat{\m R}_t^{-1}\vb x|^2}
+                        {\vb s^H\hat{\m R}_t^{-1}\vb s}
+   \;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma.$$
+This is a \underline{two-step} \gls{glrt}: the covariance is estimated from the training data, then the matched filter is applied to the \gls{cut}. The numerator is the whitened matched-filter output and the denominator $\vb s^H\hat{\m R}_t^{-1}\vb s$ is the filter's noise gain, whose role is to normalise the statistic so that, under the Gaussian and homogeneous assumption, the detector has the \gls{cfar} property with respect to the clutter power.
+
+\subsection{The Normalised Adaptive Matched Filter}
+The \gls{amf} implicitly assumes the \gls{cut} has the same interference power as the training gates. In heterogeneous or compound-Gaussian clutter this fails: the \gls{cut}'s texture $\tau_0$ differs from that of the training data, so the \gls{amf} loses its \gls{cfar} property and its false-alarm rate drifts. The \gls{namf} restores it by adding a second normalisation, dividing by the \gls{cut}'s own whitened power $\vb x^H\hat{\m R}_t^{-1}\vb x$,
+$$y_{\text{NAMF}} = \frac{|\vb s^H\hat{\m R}_t^{-1}\vb x|^2}
+   {\big(\vb s^H\hat{\m R}_t^{-1}\vb s\big)\big(\vb x^H\hat{\m R}_t^{-1}\vb x\big)}
+   \;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma.$$
+Because the unknown local power appears in both numerator and denominator, it cancels, so the \gls{namf} is \gls{cfar} with respect to the texture and is the natural baseline in spiky, non-Gaussian clutter.
+
+\subsection{Limitations}
+Both detectors are derived under the Gaussian, homogeneous assumption and rely on the \gls{scm}. In realistic sea clutter two problems arise. First, the clutter is compound-Gaussian: the varying texture $\tau$ biases the \gls{scm}, which mixes the texture and speckle together and cannot recover the speckle covariance $\m G$ alone. Second, the clutter is heterogeneous: the shared-statistics assumption underlying the training set breaks down, limiting the amount of usable secondary data. These limitations motivate detectors built on the compound-Gaussian model --- the \gls{ten} detector
+and the \gls{okd} --- developed in the following sections.
+
+\newpage
+\section{Compound-Gaussian Detectors}
+The traditional detectors of the previous section assume Gaussian, homogeneous clutter. In compound-Gaussian (K-distributed) sea clutter the optimum detector is known but \emph{clairvoyant}; a practical adaptive alternative estimates the texture. This section presents both: the optimum K-distributed detector (\gls{okd}) of Gini et al., and the texture estimation and normalisation (\gls{ten}) detector of Aboutanios and Rosenberg.
+
+\subsection{The Optimum K-Distributed Detector}
+\paragraph{Conditional model.}
+Conditioned on the texture $\tau$, the clutter is Gaussian, so the data are conditionally complex Gaussian with covariance $\m R=\tau\m G$. Under the two hypotheses,
+$$\vb x\mid\tau,H_0 \sim\mathcal{CN}(\vb 0,\tau\m G), \qquad
+  \vb x\mid\tau,H_1 \sim\mathcal{CN}(\alpha\vb s,\tau\m G),$$
+so, from the complex Gaussian density, the conditional likelihoods are
+$$f_{\vb x}(\vb x\mid\tau,H_n)=\frac{1}{(\pi\tau)^L\det\m G}
+   \exp\!\left(-\frac{q_n(\vb x)}{\tau}\right),$$
+with the two quadratic forms
+$$q_0(\vb x)=\vb x^H\m G^{-1}\vb x, \qquad
+  q_1(\vb x)=(\vb x-\alpha\vb s)^H\m G^{-1}(\vb x-\alpha\vb s).$$
+
+\paragraph{Marginalising the texture.}
+The texture is an unknown random variable, so the likelihood is obtained by averaging the conditional density over $\tau$,
+$$f_{\vb x}(\vb x\mid H_n)=\int_0^\infty f_{\vb x}(\vb x\mid\tau,H_n)\,
+   f_\tau(\tau)\,d\tau=\frac{1}{\pi^L\det\m G}\,h\big(q_n(\vb x)\big),
+   \qquad h(q)=\int_0^\infty \tau^{-L}e^{-q/\tau}f_\tau(\tau)\,d\tau.$$
+The \gls{okd} is the resulting likelihood ratio,
+$$y_{\text{OKD}}=\frac{f_{\vb x}(\vb x\mid H_1)}{f_{\vb x}(\vb x\mid H_0)}
+   =\frac{h\big(q_1(\vb x)\big)}{h\big(q_0(\vb x)\big)}
+   \;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma.$$
+For K-distributed clutter the texture is Gamma-distributed, $\tau\sim\Gamma(a,b)$, and the integral $h(q)$ has a closed form in terms of the modified Bessel function of the second kind $K_{a-L}$ --- which is what gives the clutter, and the detector, the name ``K''. Equivalently, the test applies a \underline{nonlinearity} $g(\cdot)$ derived from the texture density to the quadratic forms, in contrast to the Gaussian detector, which is linear in them. As $a\to\infty$ the texture tends to a constant and the nonlinearity flattens, recovering the whitening matched filter of Section~\ref{2}.
+
+\paragraph{Unknown amplitude.}
+When the amplitude $\alpha$ is unknown, as in practice, it is replaced by its maximum-likelihood estimate (the \gls{glrt}),
+$$\hat\alpha=\frac{\vb s^H\m G^{-1}\vb x}{\vb s^H\m G^{-1}\vb s}
+  \quad\Longrightarrow\quad
+  q_1(\vb x)=\vb x^H\m G^{-1}\vb x
+     -\frac{|\vb s^H\m G^{-1}\vb x|^2}{\vb s^H\m G^{-1}\vb s}.$$
+
+\paragraph{Clairvoyance.}
+The \gls{okd} requires the speckle covariance $\m G$ and the texture parameters $(a,b)$ to be \emph{known}. It is therefore the optimum \underline{benchmark} --- an upper bound on achievable detection performance --- rather than a realisable detector. Making it practical requires estimating both the speckle covariance and the texture, which is the subject of this work.
+
+\subsection{The Texture Estimation and Normalisation Detector}
+The \gls{ten} detector (Aboutanios and Rosenberg, 2020) is a practical, adaptive detector for K-distributed clutter that estimates the texture and normalises it, restoring homogeneity across range so that \emph{all} the training data may be used to estimate the covariance for an \gls{amf}-type statistic.
+
+\paragraph{Model.}
+The $k$th training range gate obeys $\vb z_k\sim\mathcal{CN}(\vb 0,\m R_k)$ with $\m R_k=\tau_k\m G$, and the test cell obeys $\vb x\sim\mathcal{CN}(\vb 0,\m R_T)$ with $\m R_T=\tau_T\m G$; the textures $\tau_T$ and $\{\tau_k\}$ are drawn from $\Gamma(a,b)$. The heterogeneity is thus confined to the texture --- the speckle covariance $\m G$ is shared (homogeneous).
+
+\paragraph{Texture-ratio estimation.}
+Write the test-cell and training covariance estimates as $\hat{\m Q}=\tau_T\hat{\m G}_T$ and $\hat{\m R}_k=\tau_k\hat{\m G}_k$, each formed from its gate (via the single-data-set partition). Because $\hat{\m G}_T$ and $\hat{\m G}_k$ both estimate the shared speckle $\m G$,
+\begin{align}
+  \bb E\!\left[\tr\!\big(\hat{\m Q}^{-1}\hat{\m R}_k\big)\right]
+     &= \frac{\tau_k}{\tau_T}\,\tr\!\big(\bb E[\hat{\m G}_T^{-1}]\,
+        \bb E[\hat{\m G}_k]\big)
+      \approx \frac{\tau_k}{\tau_T}\,\tr(\m I)
+      = L\,\frac{\tau_k}{\tau_T}. \nonumber
+\end{align}
+Hence the normalised trace
+$$\zeta_k=\frac{1}{L}\tr\!\big(\hat{\m Q}^{-1}\hat{\m R}_k\big)$$ is an estimate of the \underline{texture ratio} $\tau_k/\tau_T$. Crucially, \gls{ten} recovers the ratio of each training texture to the test-cell texture, \emph{not} the absolute texture.\footnote{Aboutanios and Rosenberg write the normalising dimension as $M$; here it is the dimension $L$ of the covariance matrices.}
+
+\paragraph{Normalisation and covariance estimate.}
+Re-scaling each training gate by its ratio replaces its texture with that of the test cell,
+$$\tilde{\m R}_k=\frac{1}{\zeta_k}\,\hat{\m R}_k=\tau_T\hat{\m G}_k,$$
+so the rescaled training covariances become homogeneous with the test data. They are combined with the test-cell estimate into the \gls{ten} covariance estimate
+$$\hat{\m\Sigma}_{\text{TEN}}=\frac{1}{2K-1}
+   \Big((K-1)\hat{\m Q}+\textstyle\sum_{k=1}^{K}\tilde{\m R}_k\Big),$$
+which estimates $\tau_T\m G$ --- the speckle covariance scaled by the test-cell texture. The detection statistic is the \gls{amf}-type form
+$$y_{\text{TEN}}=\frac{|\vb s^H\hat{\m\Sigma}_{\text{TEN}}^{-1}\vb g|^2}
+   {\vb s^H\hat{\m\Sigma}_{\text{TEN}}^{-1}\vb s},$$
+where $\vb g$ is the \gls{cut} data vector.
+
+\paragraph{Connection to this work.}
+\gls{ten} delivers texture \emph{ratios} $\zeta_k$ and a covariance estimate $\hat{\m\Sigma}_{\text{TEN}}\approx\tau_T\m G$ --- the speckle covariance scaled by the unknown test-cell texture. It never recovers $\m G$ or the absolute texture separately. This is precisely the leverage identified in the problem statement: the \gls{okd}, written as a normalised statistic, cancels the test-cell texture and so requires only texture ratios and the texture-scaled covariance --- exactly the quantities \gls{ten} provides --- which can therefore be fed into the \gls{okd} to approach the optimum detector.
 
 \newpage
 \section{Problem Statement and Research Gap}
 
 \subsection{Motivation}
-Detecting slow or small targets in sea clutter is difficult because sea clutter is
-\underline{non-Gaussian} (heavy-tailed and ``spiky'') and \underline{heterogeneous}
-(its statistics vary over range and time). The classical adaptive detectors --- the
-adaptive matched filter (AMF), the normalised AMF (NAMF) and Kelly's generalised
-likelihood-ratio test (GLRT) --- are all derived under a \underline{Gaussian,
-homogeneous} clutter assumption. In realistic maritime scenes this assumption is
-violated, so these detectors are mismatched and suffer a significant loss in
-detection performance. A detector that correctly accounts for the compound-Gaussian
-nature of sea clutter would improve maritime detection --- but, as explained below,
-the \emph{optimum} such detector is not directly realisable.
+Detecting slow or small targets in sea clutter is difficult because sea clutter is \underline{non-Gaussian} (heavy-tailed and ``spiky'') and \underline{heterogeneous} (its statistics vary over range and time). The classical adaptive detectors --- the \gls{amf}, the \gls{namf} and Kelly's \gls{glrt} --- are all derived under a \underline{Gaussian, homogeneous} clutter assumption. In realistic maritime scenes this assumption is violated, so these detectors are mismatched and suffer a significant loss in detection performance. A detector that correctly accounts for the compound-Gaussian nature of sea clutter would improve maritime detection --- but, as explained below, the \emph{optimum} such detector is not directly realisable.
 
 \subsection{Background: The Compound-Gaussian Model}
-Sea clutter is well modelled as a \underline{compound-Gaussian} process: the clutter
-vector factors as $\vb c = \sqrt{\tau}\,\vb q$, where the \underline{speckle}
-$\vb q\sim\mathcal{CN}(\vb 0,\m G)$ carries the fast correlation structure (through the
-covariance $\m G$) and the \underline{texture} $\tau$ is a slowly-varying random power.
-Conditioned on $\tau$, the interference covariance is $\m R = \tau\m G$; for
-K-distributed clutter $\tau$ is Gamma-distributed. Detection performance hinges on this
-interference covariance, through the optimal filter $\vb w\propto\m R^{-1}\vb s$.
+Sea clutter is well modelled as a \underline{compound-Gaussian} process: the clutter vector factors as $\vb c = \sqrt{\tau}\,\vb q$, where the \underline{speckle} $\vb q\sim\mathcal{CN}(\vb 0,\m G)$ carries the fast correlation structure (through the covariance $\m G$) and the \underline{texture} $\tau$ is a slowly-varying random power. Conditioned on $\tau$, the interference covariance is $\m R = \tau\m G$; for K-distributed clutter $\tau$ is Gamma-distributed. Detection performance hinges on this interference covariance, through the optimal filter $\vb w\propto\m R^{-1}\vb s$.
 
 \subsection{Current Literature}
 \begin{itemize}
-  \item \textbf{The optimum detector is clairvoyant.} Gini et al.\ (1998) derived the
-  optimum coherent detector for K-distributed clutter (the OKD) from the
-  likelihood-ratio test, but \emph{assuming the clutter statistics --- both $\m G$ and
-  $\tau$ --- are known}. The authors note this is an upper bound on achievable
-  performance, since a practical system must estimate these parameters. It is therefore
-  a benchmark, not a usable detector.
-  \item \textbf{The texture can be estimated.} Gini and Greco (2002) retrieve the
-  texture $\tau$ from measured sea clutter using a cyclostationary (CM-RELAX) approach,
-  and Aboutanios and Rosenberg (2020) estimate the per-cell texture and normalise it
-  --- the texture-estimation-and-normalisation (TEN) detector --- to form a practical,
-  adaptive detector.
-  \item \textbf{But the speckle covariance is assumed, not estimated.} The TEN approach
-  handles the texture while \emph{assuming the speckle covariance $\m G$ is constant
-  (shared and homogeneous) across range cells}. This is convenient but only
-  approximate: it fails when the clutter \emph{structure} --- not merely its power ---
-  varies across the scene.
+  \item \textbf{The optimum detector is clairvoyant.} Gini et al.\ (1998) derived the optimum coherent detector for K-distributed clutter (the \gls{okd}) from the \gls{lrt}, but \emph{assuming the clutter statistics --- both $\m G$ and $\tau$ --- are known}. The authors note this is an upper bound on achievable performance, since a practical system must estimate these parameters. It is therefore a benchmark, not a usable detector.
+  \item \textbf{The texture can be estimated.} Gini and Greco (2002) retrieve the texture $\tau$ from measured sea clutter using a cyclostationary (CM-RELAX) approach, and Aboutanios and Rosenberg (2020) estimate the per-cell texture and normalise it --- the \gls{ten} detector --- to form a practical, adaptive detector. Crucially, \gls{ten} does not recover the speckle covariance $\m G$ directly: it yields $\m G$\emph{scaled by the texture of the cell under test}, together with the relative texture across range gates.
+  \item \textbf{But the speckle covariance is assumed, not estimated.} The \gls{ten} approach handles the texture while \emph{assuming the speckle covariance $\m G$ is shared and homogeneous across range cells}. This is convenient but only approximate: it fails when the clutter \emph{structure} --- not merely its power --- varies across the scene.
 \end{itemize}
 
 \subsection{The Research Gap}
-Taken together, no practical scheme estimates \emph{both} compound-Gaussian covariance
-components and feeds them into the optimum detector:
-\begin{itemize}
-  \item the optimum detector requires both $\tau$ and $\m G$, assumed known;
-  \item existing adaptive methods estimate the \emph{texture} but \emph{assume or
-  approximate the speckle covariance} $\m G$.
-\end{itemize}
-The missing piece is a \underline{robust estimate of the speckle covariance $\m G$}
-for K-distributed clutter --- ideally one that relaxes the shared-$\m G$ assumption
---- which, combined with a texture estimate, would turn Gini's clairvoyant optimum
-detector into a practical, adaptive one.
+The \gls{okd} requires both the texture $\tau$ and the speckle covariance $\m G$, yet neither is separately observable from the received data: the \gls{scm} mixes the two together and cannot isolate $\m G$. Existing adaptive methods estimate the texture --- more precisely, the \emph{ratios} of texture between range gates --- but assume or approximate $\m G$. No practical scheme feeds estimates of both compound-Gaussian components into the optimum detector. The missing piece is a route from the quantities that \emph{can} be estimated --- texture ratios and the texture-scaled covariance produced by \gls{ten} --- to a realisable form of the \gls{okd}.
 
 \subsection{Aim and Contribution}
-This work develops an estimator of the speckle covariance $\m G$ for K-distributed sea
-clutter, combines it with texture estimation, and uses the result in the Gini optimum
-(OKD) detector. This realises a practical, adaptive form of the optimum
-compound-Gaussian detector, whose detection performance is then evaluated against the
-Gaussian-assuming baselines (AMF/NAMF).
+This work investigates whether a practical, adaptive form of the \gls{okd} can be realised by building on existing texture-estimation methods. The key observation, central to the approach, is that the optimum detector does not require the \emph{absolute} texture, which is unobservable: written as a normalised statistic, the texture of the cell under test cancels, leaving a dependence only on the \emph{ratios} of texture between range gates. These ratios, and the texture-scaled speckle covariance, are exactly the quantities that \gls{ten} provides. The contribution is therefore to reformulate the \gls{okd} test statistic so that it depends only on these estimable quantities, and to evaluate the detection performance of the resulting detector against the Gaussian baselines (\gls{amf}, \gls{namf}) and the \gls{ten} detector.
+
+\subsection{Approach}
+Two complementary routes are pursued:
+\begin{enumerate}
+  \item recover the speckle covariance from the \gls{ten} formulation --- noting that it yields $\m G$ scaled by the test-cell texture rather than $\m G$ itself --- and establish whether this scaled covariance is sufficient for the detector, the scale cancelling elsewhere in the statistic; or
+  \item manipulate the \gls{okd} test statistic directly into a modified form that carries both $\tau$ and $\m G$ in a way that admits the \gls{ten} estimate, so that only texture ratios and the scaled covariance are required.
+\end{enumerate}
+A closed-form simplification may not be attainable, in which case the statistic is evaluated numerically. Performance is then assessed in two complementary ways: \emph{empirically}, through Monte-Carlo simulation of K-distributed clutter, and \emph{theoretically}, through numerical integration of the analytic detection and false-alarm expressions. The proposed detector is compared with the \gls{amf} and the \gls{ten} detector on common $P_d$ curves at a fixed $P_{fa}$.
 
 \subsection{Scope}
-Two levels of ambition are possible for the speckle-covariance estimate:
+Two levels of ambition are possible for the speckle-covariance treatment:
 \begin{enumerate}
-  \item estimate a single shared $\m G$ accurately, retaining the homogeneity
-  assumption; or
-  \item relax the shared-$\m G$ assumption, allowing $\m G$ to vary across the scene
-  (e.g.\ in piecewise-homogeneous regions).
+  \item retain the homogeneity assumption, estimating a single shared $\m G$ (or its texture-scaled form) accurately; or
+  \item relax the shared-$\m G$ assumption, allowing $\m G$ to vary across the scene (e.g.\ in piecewise-homogeneous regions).
 \end{enumerate}
-This choice sets the risk and novelty of the project and is to be fixed in consultation
-with the supervisor.
-
+The first is the initial milestone; the second sets the additional risk and novelty of the project and is to be fixed in consultation with the supervisor.
 
 \newpage
 \section{Appendix: Supporting Concepts}
@@ -281,13 +389,83 @@ $\mathrm{Cov}(\m R^{-1/2}\vv\varsigma)=\m R^{-1/2}\m R\,\m R^{-1/2}
   statistic. The MVDR/Capon normalisation fixes it as
   $\vb w = \vb R^{-1}\vb s/(\vb s^H\vb R^{-1}\vb s)$ (unit gain toward $\vb s$,
   minimum output power).
-  \item Under \emph{Gaussian} interference this whitening matched filter is also the
-  likelihood-ratio (Neyman--Pearson) optimal detector. For non-Gaussian
-  (compound-Gaussian) clutter it remains the optimal \emph{linear} filter given
-  $\vb R$, but the globally optimal detector is the Gini-type test.
-  \item In practice $\vb R$ is unknown and replaced by an estimate $\hat{\vb R}$,
-  giving the adaptive matched filter $|\vb s^H\hat{\vb R}^{-1}\vb x|^2$.
+  \item Under \emph{Gaussian} interference this whitening matched filter is also the likelihood-ratio (Neyman--Pearson) optimal detector. For non-Gaussian (compound-Gaussian) clutter it remains the optimal \emph{linear} filter given $\vb R$, but the globally optimal detector is the Gini-type test.
+  \item In practice $\vb R$ is unknown and replaced by an estimate $\hat{\vb R}$, giving the adaptive matched filter $|\vb s^H\hat{\vb R}^{-1}\vb x|^2$.
 \end{itemize}
+
+\subsection{The Gaussian Interference Likelihoods}
+\label{app:gausslik}
+This appendix derives the two likelihoods used in Section~\ref{2.4} from the definition of the complex Gaussian density.
+
+\paragraph{Definition.}
+A length-$L$ \underline{circularly-symmetric} (proper) complex Gaussian vector $\vb z$ with mean $\vv\mu=\bb E[\vb z]$ and Hermitian, positive-definite covariance $\m R=\bb E[(\vb z-\vv\mu)(\vb z-\vv\mu)^H]$ has probability density
+\begin{equation}
+  f_{\vb z}(\vb z) = \frac{1}{\pi^L\det\m R}
+    \exp\!\left(-(\vb z-\vv\mu)^H\m R^{-1}(\vb z-\vv\mu)\right),
+  \qquad \vb z\sim\mathcal{CN}(\vv\mu,\m R). \label{eq:cngauss}
+\end{equation}
+Circular symmetry means the \emph{pseudo-covariance} vanishes,
+$\bb E[(\vb z-\vv\mu)(\vb z-\vv\mu)^T]=\m 0$; this is the condition that collapses the
+distribution of the $2L$ real and imaginary components onto the single Hermitian
+quadratic form in \eqref{eq:cngauss}.\footnote{For $L=1$, write $z=x+jy$ with $\bb E|z|^2=\sigma^2$. Circular symmetry makes $x,y$ independent, each $\mathcal N(0,\sigma^2/2)$, so $f(z)=\frac{1}{2\pi(\sigma^2/2)}\exp\!\big(-\tfrac{x^2+y^2}{\sigma^2}\big)=\frac{1}{\pi\sigma^2}\exp\!\big(-|z|^2/\sigma^2\big)$, which is \eqref{eq:cngauss} for $L=1$. For general $L$, stacking $\tilde{\vb z}=[\operatorname{Re}\vb z;\ \operatorname{Im}\vb z]\in\bb R^{2L}$ yields a real Gaussian with covariance $\m C=\tfrac12\left[\begin{smallmatrix}\operatorname{Re}\m R & -\operatorname{Im}\m R\\ \operatorname{Im}\m R & \operatorname{Re}\m R\end{smallmatrix}\right]$, and the identities $\det\m C=2^{-2L}(\det\m R)^2$ and $(\tilde{\vb z}-\tilde{\vv\mu})^T\m C^{-1}(\tilde{\vb z}-\tilde{\vv\mu})=2(\vb z-\vv\mu)^H\m R^{-1}(\vb z-\vv\mu)$ turn the real density $\frac{1}{(2\pi)^L(\det\m C)^{1/2}}\exp(-\tfrac12(\cdot))$ into \eqref{eq:cngauss}, since $(2\pi)^L(\det\m C)^{1/2}=\pi^L\det\m R$.}
+
+\paragraph{Lemma (a deterministic shift preserves the covariance).}
+Let $\vv\varsigma\sim\mathcal{CN}(\vb 0,\m R)$ and let $\vb m$ be a deterministic vector. Then $\vb x=\vb m+\vv\varsigma\sim\mathcal{CN}(\vb m,\m R)$.
+
+\emph{Proof.} The mean follows from linearity, $\bb E[\vb x]=\vb m+\bb E[\vv\varsigma]=\vb m$. Subtracting this mean removes $\vb m$ entirely, so the covariance is $\bb E[(\vb x-\vb m)(\vb x-\vb m)^H]=\bb E[\vv\varsigma\,\vv\varsigma^H]=\m R$, and likewise the pseudo-covariance is $\bb E[(\vb x-\vb m)(\vb x-\vb m)^T]=\bb E[\vv\varsigma\,\vv\varsigma^T]=\m 0$, so $\vb x$ remains circularly symmetric. A deterministic shift therefore changes only the mean, leaving $\m R$ (and the proper structure) intact. Substituting $\vv\mu=\vb m$ into \eqref{eq:cngauss} gives the density of $\vb x$.
+
+\paragraph{The two hypotheses.}
+In the Gaussian case the interference is $\vv\varsigma\sim\mathcal{CN}(\vb 0,\m R)$,
+and the received vector under the two hypotheses is
+$$H_0:\ \vb x=\vv\varsigma, \qquad H_1:\ \vb x=\alpha\vb s+\vv\varsigma,$$
+where the amplitude $\alpha$ and steering vector $\vb s$ are known, hence the term
+$\alpha\vb s$ is deterministic. Applying the lemma with $\vb m=\vb 0$ and
+$\vb m=\alpha\vb s$ respectively,
+\begin{align}
+  H_0:\ \vb x\sim\mathcal{CN}(\vb 0,\m R)
+     &\;\Rightarrow\;
+     f_{\vb x}(\vb x\mid H_0)=\frac{1}{\pi^L\det\m R}
+        \exp\!\left(-\vb x^H\m R^{-1}\vb x\right), \nonumber\\
+  H_1:\ \vb x\sim\mathcal{CN}(\alpha\vb s,\m R)
+     &\;\Rightarrow\;
+     f_{\vb x}(\vb x\mid H_1)=\frac{1}{\pi^L\det\m R}
+        \exp\!\left(-(\vb x-\alpha\vb s)^H\m R^{-1}(\vb x-\alpha\vb s)\right). \nonumber
+\end{align}
+These are the likelihoods of Section~\ref{2.4}. Only the mean differs between the hypotheses ($\vb 0$ versus $\alpha\vb s$); the covariance is $\m R$ under both, which is precisely why the $1/(\pi^L\det\m R)$ prefactors cancel in the log-likelihood ratio, leaving only the difference of the two quadratic forms.
+
+\subsection{The Gaussian Log-Likelihood Ratio}
+\label{app:gllr}
+We now expand the log-likelihood ratio of Section~\ref{2.4} using the two likelihoods derived above. Taking the logarithm of the ratio, the common prefactor $1/(\pi^L\det\m R)$ cancels (the covariance $\m R$ is the same under both hypotheses), leaving only the difference of the quadratic forms,
+\begin{align}
+  \ln y
+    &= \ln f_{\vb x}(\vb x\mid H_1) - \ln f_{\vb x}(\vb x\mid H_0) \nonumber\\
+    &= \vb x^H\m R^{-1}\vb x
+       - (\vb x-\alpha\vb s)^H\m R^{-1}(\vb x-\alpha\vb s). \label{eq:lnratio}
+\end{align}
+Expanding the second quadratic form term by term,
+\begin{align}
+  (\vb x-\alpha\vb s)^H\m R^{-1}(\vb x-\alpha\vb s)
+    &= \vb x^H\m R^{-1}\vb x
+     - \alpha\,\vb x^H\m R^{-1}\vb s
+     - \alpha^{*}\,\vb s^H\m R^{-1}\vb x
+     + |\alpha|^2\,\vb s^H\m R^{-1}\vb s. \nonumber
+\end{align}
+Substituting this into \eqref{eq:lnratio}, the $\vb x^H\m R^{-1}\vb x$ terms cancel,
+\begin{align}
+  \ln y
+    &= \alpha\,\vb x^H\m R^{-1}\vb s
+     + \alpha^{*}\,\vb s^H\m R^{-1}\vb x
+     - |\alpha|^2\,\vb s^H\m R^{-1}\vb s. \label{eq:lnexp}
+\end{align}
+The first two terms are complex conjugates of one another. To see this, note that $\vb s^H\m R^{-1}\vb x$ is a scalar, and because $\m R$ is Hermitian so is $\m R^{-1}$; hence its conjugate is
+$(\vb s^H\m R^{-1}\vb x)^{*}=\vb x^H\m R^{-1}\vb s$, giving $\alpha\,\vb x^H\m R^{-1}\vb s=\big(\alpha^{*}\,\vb s^H\m R^{-1}\vb x\big)^{*}$.
+Using $w+w^{*}=2\,\mathrm{Re}\{w\}$ with $w=\alpha^{*}\,\vb s^H\m R^{-1}\vb x$,
+\begin{equation}
+  \boxed{\;\ln y = 2\,\mathrm{Re}\{\alpha^{*}\,\vb s^H\m R^{-1}\vb x\}
+                 - |\alpha|^2\,\vb s^H\m R^{-1}\vb s.\;} \label{eq:llrfinal}
+\end{equation}
+The second term, $|\alpha|^2\,\vb s^H\m R^{-1}\vb s$, is a known constant (it does not depend on the data $\vb x$) and is absorbed into the threshold, so the only data-dependent quantity is $\mathrm{Re}\{\alpha^{*}\,\vb s^H\m R^{-1}\vb x\}$. This identifies $\vb s^H\m R^{-1}\vb x$ --- the whitening matched filter --- as the sufficient statistic. When the phase of $\alpha$ is unknown, the detector cannot exploit the real part specifically and instead uses the magnitude, yielding the
+matched-filter statistic $y=|\vb s^H\m R^{-1}\vb x|^2$ of Section~\ref{2.4}
 
 \newpage
 \section{Action}
