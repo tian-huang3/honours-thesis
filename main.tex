@@ -201,7 +201,7 @@ As established in the previous section, the optimal detector in Gaussian interfe
 The covariance is estimated from a set of training range gates surrounding the \gls{cut}, assumed to be target-free and to share the \gls{cut}'s interference statistics. If the \gls{cut} has index $k$, the $L\times K_t$ training-data matrix is formed from the $K_t$ neighbouring gates, excluding the \gls{cut} itself,
 $$\tilde{\m Z}_k = \left[\,\vb z_{k-K_t/2},\ \ldots,\ \vb z_{k-1},\ \vb z_{k+1},\
    \ldots,\ \vb z_{k+K_t/2}\,\right],$$
-where each column $\vb z_i$ is the vectorised snapshot of range gate $i$. The \gls{scm} is then
+where each column $\vb z_i$ is the vectorised snapshot (of length $L$) of range gate $i$. The \gls{scm} is then
 $$\hat{\m R}_t = \frac{1}{K_t}\,\tilde{\m Z}_k\tilde{\m Z}_k^H,$$
 the subscript $t$ denoting that it is built from training data. Under the Gaussian, homogeneous assumption the \gls{scm} is the \gls{mle} of $\vb R$. Its quality is governed by the sample support $K_t$: the \gls{rmb} rule gives $K_t\approx 2L$ for an average loss of about $3$~dB in \gls{sinr} relative to the known-$\vb R$ matched filter, so a large, homogeneous training set is needed for the estimate to be accurate.
 
@@ -390,7 +390,7 @@ $\mathrm{Cov}(\m R^{-1/2}\vv\varsigma)=\m R^{-1/2}\m R\,\m R^{-1/2}
   $\vb w = \vb R^{-1}\vb s/(\vb s^H\vb R^{-1}\vb s)$ (unit gain toward $\vb s$,
   minimum output power).
   \item Under \emph{Gaussian} interference this whitening matched filter is also the likelihood-ratio (Neyman--Pearson) optimal detector. For non-Gaussian (compound-Gaussian) clutter it remains the optimal \emph{linear} filter given $\vb R$, but the globally optimal detector is the Gini-type test.
-  \item In practice $\vb R$ is unknown and replaced by an estimate $\hat{\vb R}$, giving the adaptive matched filter $|\vb s^H\hat{\vb R}^{-1}\vb x|^2$.
+  \item In practice $\vb R$ is unknown and replaced by an estimate $\hat{\vb R}$, giving the adaptive matched filter $|\vb s^H\hat{\vb R}^{-1}\vb x|^2$. As the training set grows, $\hat{\m R} \rightarrow\m R$. The \gls{amf} is the finite-sample, realisable approximation of the \gls{wmf}.
 \end{itemize}
 
 \subsection{The Gaussian Interference Likelihoods}
