@@ -27,7 +27,7 @@ Multichannel space-time array radar refers to advanced radar systems that combin
 \end{itemize}
 
 \subsection{Airborne Radar Signal Model}
-Consider an airborne radar with an along-track side looking linear array comprising $N$ antennas, with inter-element spacing $d$, transmitting $M$ pulses in a \gls{cpi} at the pulse repetition frequency, $f_{PRF}$. Let the radar be travelling at velocity $v_p$.  
+Consider an airborne radar with an along-track side looking linear array comprising $N$ antennas, with inter-element spacing $d$, transmitting $M$ pulses in a \gls{cpi} at the \acrlong{prf}, $f_{PRF}$. Let the radar be travelling at velocity $v_p$.  
 
 \begin{figure}[h]
     \centering
@@ -128,7 +128,7 @@ A moving target generally has an additional radial velocity of its own, so it fa
     \label{fig:clutter_ridge}
 \end{figure}
 
-Because the clutter is confined to this ridge, it occupies a low-dimensional subspace of the $L=NM$ space--time space. Brennan's rule estimates the clutter rank as $$r \approx N + \beta(M-1) \ll NM,$$ which is the basis for reduced-rank clutter suppression.
+Because the clutter is confined to this ridge, it occupies a low-dimensional subspace of the $L=NM$ space--time space. Brennan's rule estimates the clutter rank as $$r \approx N + \beta(M-1) \ll NM,$$ which is the basis for reduced-rank clutter suppression. The clutter rank is the rank of the clutter covariance $\m G$.
 
 \newpage
 \section{Detection and Statistical Theory}
@@ -176,10 +176,10 @@ as derived in Appendix~\ref{app:gausslik}. The normalising constants cancel in t
 \end{align}
 The only data-dependent term is $\mathrm{Re}\{\alpha^*\,\vb s^H\vb R^{-1}\vb x\}$, so the \gls{wmf} $\vb s^H\vb R^{-1}\vb x$ is a \underline{sufficient statistic} (Appendix~\ref{app:wmf}). When the phase of $\alpha$ is unknown, as is usual, the test depends on the data only through the magnitude, giving the matched-filter detection statistic
 $$y = |\vb s^H\vb R^{-1}\vb x|^2
-   \;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma.$$
+   \;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma'.$$
 This is the optimal (\gls{np}) detector for a known target in Gaussian interference of known covariance, and it is the benchmark from which the practical detectors of the following section depart.
 
-\subsection{Unknown Parameters: the Generalised Likelihood Ratio Test}
+\subsection{Unknown Parameters: the Generalised Likelihood Ratio Test (\acrshort{glrt})}
 The clean likelihood ratio above assumes the target amplitude $\alpha$ and the interference covariance $\vb R$ are known. In practice neither is: $\alpha$ is precisely what we are testing for, and $\vb R$ must be learned from data. The hypotheses are then \underline{composite} --- each spans a family of distributions indexed by the unknown parameters --- and the simple likelihood ratio no longer applies directly.
 
 The standard remedy is the \gls{glrt}: replace each unknown parameter by its \gls{mle} under each hypothesis,
@@ -198,12 +198,39 @@ under $H_0$ --- and hence the threshold needed for a given $P_{fa}$ --- is invar
 As established in the previous section, the optimal detector in Gaussian interference is the matched filter $|\vb s^H\vb R^{-1}\vb x|^2$, but it requires the interference covariance $\vb R$, which is unknown in practice. A \underline{traditional} detector is obtained by replacing $\vb R$ with an estimate $\hat{\vb R}_t$ formed from \underline{secondary (training) data}. The detectors below --- the \gls{amf} and the \gls{namf} --- are the resulting Gaussian, homogeneous-clutter baselines against which this work is compared.
 
 \subsection{Secondary Data and the Sample Covariance Matrix}
-The covariance is estimated from a set of training range gates surrounding the \gls{cut}, assumed to be target-free and to share the \gls{cut}'s interference statistics. If the \gls{cut} has index $k$, the $L\times K_t$ training-data matrix is formed from the $K_t$ neighbouring gates, excluding the \gls{cut} itself,
-$$\tilde{\m Z}_k = \left[\,\vb z_{k-K_t/2},\ \ldots,\ \vb z_{k-1},\ \vb z_{k+1},\
+The covariance is estimated from a set of training range gates surrounding the \gls{cut}. If the \gls{cut} has index $k$, the $L\times K_t$ training-data matrix is formed from the $K_t$ neighbouring gates, excluding the \gls{cut} itself, $$\tilde{\m Z}_k = \left[\,\vb z_{k-K_t/2},\ \ldots,\ \vb z_{k-1},\ \vb z_{k+1},\
    \ldots,\ \vb z_{k+K_t/2}\,\right],$$
-where each column $\vb z_i$ is the vectorised snapshot (of length $L$) of range gate $i$. The \gls{scm} is then
-$$\hat{\m R}_t = \frac{1}{K_t}\,\tilde{\m Z}_k\tilde{\m Z}_k^H,$$
-the subscript $t$ denoting that it is built from training data. Under the Gaussian, homogeneous assumption the \gls{scm} is the \gls{mle} of $\vb R$. Its quality is governed by the sample support $K_t$: the \gls{rmb} rule gives $K_t\approx 2L$ for an average loss of about $3$~dB in \gls{sinr} relative to the known-$\vb R$ matched filter, so a large, homogeneous training set is needed for the estimate to be accurate.
+where each column $\vb z_i$ is the vectorised snapshot (of length $L$) of range gate $i$.
+
+\paragraph{Modelling assumptions.}
+The training snapshots are modelled as \underline{independent}, \underline{zero-mean} and \underline{homogeneous} complex Gaussian vectors sharing a common covariance,
+$$\vb z_i \sim \mathcal{CN}(\vb 0,\m R), \qquad i=1,\ldots,K_t.$$ 
+Zero mean reflects the assumption that the training gates are \emph{target-free} (pure interference), while the common $\m R$ is the \emph{homogeneity} assumption --- every training gate is taken to share the \gls{cut}'s interference statistics.
+
+\paragraph{Maximum-likelihood estimate.}
+Under this model the covariance is estimated by maximum likelihood. Because the snapshots are independent, the joint likelihood is the product of their densities,
+$$\mathcal{L}(\m R)=\prod_{i=1}^{K_t}\frac{1}{\pi^L\det\m R}
+   \exp\!\left(-\vb z_i^H\m R^{-1}\vb z_i\right)
+  =\frac{1}{\pi^{LK_t}(\det\m R)^{K_t}}
+   \exp\!\left(-\sum_{i=1}^{K_t}\vb z_i^H\m R^{-1}\vb z_i\right),$$
+with log-likelihood
+$$\ell(\m R)=-LK_t\ln\pi-K_t\ln\det\m R-\sum_{i=1}^{K_t}\vb z_i^H\m R^{-1}\vb z_i.$$
+Each quadratic form $\vb z_i^H\m R^{-1}\vb z_i$ is a scalar and therefore equals its own trace; by the cyclic property of the trace,
+$$\sum_{i=1}^{K_t}\vb z_i^H\m R^{-1}\vb z_i
+   =\tr\!\Big(\m R^{-1}\sum_{i=1}^{K_t}\vb z_i\vb z_i^H\Big)
+   =K_t\,\tr\!\big(\m R^{-1}\hat{\m R}_t\big),
+   \qquad \text{where:} \quad
+   \hat{\m R}_t=\frac{1}{K_t}\,\tilde{\m Z}_k\tilde{\m Z}_k^H
+   =\frac{1}{K_t}\sum_{i=1}^{K_t}\vb z_i\vb z_i^H,$$
+which is precisely the \gls{scm} (the subscript $t$ denoting training data). Up to constants, maximising $\ell$ is therefore equivalent to maximising $-\ln\det\m R-\tr(\m R^{-1}\hat{\m R}_t)$ over Hermitian, positive-definite $\m R$.
+Setting the gradient to zero,
+$$-\m R^{-1}+\m R^{-1}\hat{\m R}_t\m R^{-1}=\m 0
+  \quad\Longrightarrow\quad
+  \boxed{\;\hat{\m R}_{\mathrm{ML}}=\hat{\m R}_t\;}$$
+so the \gls{scm} is the \gls{mle} of $\m R$.\footnote{The stationary point is a maximum: writing the eigenvalues of $\m R^{-1/2}\hat{\m R}_t\m R^{-1/2}$ as $\lambda_i>0$, the objective becomes $-\ln\det\hat{\m R}_t+\sum_i(\ln\lambda_i-\lambda_i)$, and each concave term $\ln\lambda_i-\lambda_i$ is maximised at $\lambda_i=1$, i.e.$\m R=\hat{\m R}_t$.}
+
+\paragraph{Properties and sample support.}
+The \gls{scm} is also \underline{unbiased}, $\bb E[\hat{\m R}_t]=\m R$, since $\bb E[\vb z_i\vb z_i^H]=\m R$. Being a sum of $K_t$ rank-one terms, it is invertible (as required for $\hat{\m R}_t^{-1}$ in the detectors below) only when $K_t\ge L$. Its quality is governed by the sample support $K_t$: the \gls{rmb} rule gives $K_t\approx 2L$ for an average loss of about $3$~dB in \gls{sinr} relative to the known-$\m R$ matched filter, so a large, homogeneous training set is needed for the estimate to be accurate --- a requirement that is hard to meet in heterogeneous sea clutter, and which motivates the methods developed later in this work.
 
 \subsection{The Adaptive Matched Filter}
 Replacing $\vb R$ by $\hat{\m R}_t$ in the matched filter and normalising gives the \gls{amf} detection statistic
@@ -211,6 +238,13 @@ $$y_{\text{AMF}} = \frac{|\vb s^H\hat{\m R}_t^{-1}\vb x|^2}
                         {\vb s^H\hat{\m R}_t^{-1}\vb s}
    \;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma.$$
 This is a \underline{two-step} \gls{glrt}: the covariance is estimated from the training data, then the matched filter is applied to the \gls{cut}. The numerator is the whitened matched-filter output and the denominator $\vb s^H\hat{\m R}_t^{-1}\vb s$ is the filter's noise gain, whose role is to normalise the statistic so that, under the Gaussian and homogeneous assumption, the detector has the \gls{cfar} property with respect to the clutter power.
+
+\subsection{The Adaptive Matched Filter}
+Replacing $\vb R$ by $\hat{\m R}_t$ in the matched filter and normalising gives the \gls{amf} detection statistic
+$$y_{\text{AMF}} = \frac{|\vb s^H\hat{\m R}_t^{-1}\vb x|^2}
+                        {\vb s^H\hat{\m R}_t^{-1}\vb s}
+   \;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma.$$
+This is a \underline{two-step} \gls{glrt}: the covariance is estimated from the training data, then the matched filter is applied to the \gls{cut}.
 
 \subsection{The Normalised Adaptive Matched Filter}
 The \gls{amf} implicitly assumes the \gls{cut} has the same interference power as the training gates. In heterogeneous or compound-Gaussian clutter this fails: the \gls{cut}'s texture $\tau_0$ differs from that of the training data, so the \gls{amf} loses its \gls{cfar} property and its false-alarm rate drifts. The \gls{namf} restores it by adding a second normalisation, dividing by the \gls{cut}'s own whitened power $\vb x^H\hat{\m R}_t^{-1}\vb x$,
@@ -255,7 +289,8 @@ When the amplitude $\alpha$ is unknown, as in practice, it is replaced by its ma
 $$\hat\alpha=\frac{\vb s^H\m G^{-1}\vb x}{\vb s^H\m G^{-1}\vb s}
   \quad\Longrightarrow\quad
   q_1(\vb x)=\vb x^H\m G^{-1}\vb x
-     -\frac{|\vb s^H\m G^{-1}\vb x|^2}{\vb s^H\m G^{-1}\vb s}.$$
+     -\frac{|\vb s^H\m G^{-1}\vb x|^2}{\vb s^H\m G^{-1}\vb s};$$
+derived in Appendix~\ref{app:okd-glrt}
 
 \paragraph{Clairvoyance.}
 The \gls{okd} requires the speckle covariance $\m G$ and the texture parameters $(a,b)$ to be \emph{known}. It is therefore the optimum \underline{benchmark} --- an upper bound on achievable detection performance --- rather than a realisable detector. Making it practical requires estimating both the speckle covariance and the texture, which is the subject of this work.
@@ -293,6 +328,92 @@ where $\vb g$ is the \gls{cut} data vector.
 \gls{ten} delivers texture \emph{ratios} $\zeta_k$ and a covariance estimate $\hat{\m\Sigma}_{\text{TEN}}\approx\tau_T\m G$ --- the speckle covariance scaled by the unknown test-cell texture. It never recovers $\m G$ or the absolute texture separately. This is precisely the leverage identified in the problem statement: the \gls{okd}, written as a normalised statistic, cancels the test-cell texture and so requires only texture ratios and the texture-scaled covariance --- exactly the quantities \gls{ten} provides --- which can therefore be fed into the \gls{okd} to approach the optimum detector.
 
 \newpage
+\section{Simulation Code}\label{sec:code}
+
+This section documents the MATLAB code used to generate the simulated data in this thesis. Section~\ref{sec:code:model} gives the clutter model that all of the clutter generators share. Each script then has its own subsection, and full listings are collected in Section~\ref{sec:code:listings}.
+
+\paragraph{Conventions.} Throughout, $N$ is the number of spatial channels and $M$ the number of pulses in the coherent processing interval, so each snapshot has length $NM$. Space-time vectors are stacked \emph{space within time},
+\[
+  \vb s(f_s,f_d) = \vb s_\text{temp}(f_d)\otimes\vb s_\text{sp}(f_s),
+\]
+so the first $N$ entries belong to pulse $0$, the next $N$ to pulse $1$, and so on (MATLAB \texttt{kron(st,ss)}). Table~\ref{tab:code:symbols} maps the symbols used here to the code variables.
+ 
+\begin{table}[ht]
+  \centering\small
+  \caption{Symbols and the corresponding variables in \texttt{gen\_clutter\_data.m}.}
+  \label{tab:code:symbols}
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Symbol & Code & Meaning \\
+    \midrule
+    $N$, $M$          & \texttt{p.radar.N}, \texttt{p.radar.M}      & channels, pulses \\
+    $f_\mathrm{PRF}=1/T_r$ & \texttt{p.radar.PRF}                   & pulse repetition frequency \\
+    $\lambda$, $d$    & \texttt{p.radar.lambda}, \texttt{p.radar.D} & wavelength, element spacing \\
+    $v_p$             & \texttt{p.radar.vp}                         & platform speed \\
+    $\phi_L$          & \texttt{p.radar.phiL}                       & look direction (input in degrees) \\
+    $N_\phi$          & \texttt{p.cModel.Nphi}                      & number of clutter patches \\
+    $a$, $b$          & \texttt{p.cModel.a}, \texttt{p.cModel.b} & Gamma shape and scale of the texture \\
+    $u$               & \texttt{p.cModel.u}                         & variance of the Doppler perturbation \\
+    $K$               & \texttt{Nr}                                 & number of snapshots (range cells) \\
+    $\vb S$           & \texttt{SSc}                                & patch steering vectors ($NM\times N_\phi$) \\
+    $g_k$             & \texttt{DG}                                 & antenna pattern weight of patch $k$ \\
+    $\alpha_{k}$      & \texttt{Av}                                 & complex amplitude of patch $k$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+\subsection{Clutter-Patch Model}\label{sec:code:model}
+ 
+The clutter generators use the discrete clutter-patch model of Melvin~\cite{Melvin2004} (eq.~13), which follows Ward and Klemm. The ground at the range of interest is an iso-range ring. The ring is divided into $N_\phi$ patches at azimuth angles $\phi_k$, each a statistically independent
+scatterer. The transmitted pulse illuminates every patch. Each patch reflects it with a random complex amplitude $\alpha_k$, weighted by the antenna pattern, and the return from range cell $\ell$ is the coherent sum
+\begin{equation}
+  \vb c_\ell = \Delta\phi \sum_{k=1}^{N_\phi} g_k\,\alpha_{k\ell}\,
+               \vb s\big(f_s(\phi_k), f_d(\phi_k)\big),
+  \label{eq:code:patchsum}
+\end{equation}
+where $\Delta\phi$ is the patch width. Only one iso-range ring is modelled, so there are no range ambiguities.
+ 
+\paragraph{Geometry.} The angle $\phi$ is measured from the array axis, which is also the direction of flight. In terms of the broadside angle $\theta$ used in Chapter~\ref{ch:background}, $\theta = \pi/2-\phi$ and $\cos\phi=\sin\theta$. A patch at $\phi_k$ has spatial and normalised Doppler
+frequencies
+\begin{equation}
+  f_s(\phi_k) = \frac{d}{\lambda}\cos\phi_k, \qquad
+  f_d(\phi_k) = \frac{2v_pT_r}{\lambda}\cos\phi_k = \beta\, f_s(\phi_k),
+  \label{eq:code:freqs}
+\end{equation}
+so all patches lie on the clutter ridge of slope $\beta = 2v_pT_r/d$. The code takes $\phi\in[0,\pi]$, which is the half-plane in front of the array (the back lobe is ignored), and assumes a negligible depression angle (no $\cos\theta_\text{el}$ factor).
+ 
+\paragraph{Antenna pattern.} Each patch is weighted by
+\begin{equation}
+  g_k = \Big[\tfrac12\big(1+\cos 2(\phi_k-\phi_L)\big)\Big]^2 = \cos^4(\phi_k-\phi_L),
+\end{equation}
+which is a two-way (transmit times receive) $\cos^2$ element pattern steered to the look direction $\phi_L$. It applies to amplitude, so the power weight is $g_k^2=\cos^8(\phi_k-\phi_L)$.
+ 
+% ---------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\newpage
 \section{Problem Statement and Research Gap}
 
 \subsection{Motivation}
@@ -304,7 +425,7 @@ Sea clutter is well modelled as a \underline{compound-Gaussian} process: the clu
 \subsection{Current Literature}
 \begin{itemize}
   \item \textbf{The optimum detector is clairvoyant.} Gini et al.\ (1998) derived the optimum coherent detector for K-distributed clutter (the \gls{okd}) from the \gls{lrt}, but \emph{assuming the clutter statistics --- both $\m G$ and $\tau$ --- are known}. The authors note this is an upper bound on achievable performance, since a practical system must estimate these parameters. It is therefore a benchmark, not a usable detector.
-  \item \textbf{The texture can be estimated.} Gini and Greco (2002) retrieve the texture $\tau$ from measured sea clutter using a cyclostationary (CM-RELAX) approach, and Aboutanios and Rosenberg (2020) estimate the per-cell texture and normalise it --- the \gls{ten} detector --- to form a practical, adaptive detector. Crucially, \gls{ten} does not recover the speckle covariance $\m G$ directly: it yields $\m G$\emph{scaled by the texture of the cell under test}, together with the relative texture across range gates.
+  \item \textbf{The texture can be estimated.} Gini and Greco (2002) retrieve the texture $\tau$ from measured sea clutter using a cyclostationary (CM-RELAX) approach, and Aboutanios and Rosenberg (2020) estimate the per-cell texture and normalise it --- the \gls{ten} detector --- to form a practical, adaptive detector. Crucially, \gls{ten} does not recover the speckle covariance $\m G$ directly: it yields $\m G$ \emph{scaled by the texture of the cell under test}, together with the relative texture across range gates.
   \item \textbf{But the speckle covariance is assumed, not estimated.} The \gls{ten} approach handles the texture while \emph{assuming the speckle covariance $\m G$ is shared and homogeneous across range cells}. This is convenient but only approximate: it fails when the clutter \emph{structure} --- not merely its power --- varies across the scene.
 \end{itemize}
 
@@ -467,6 +588,55 @@ Using $w+w^{*}=2\,\mathrm{Re}\{w\}$ with $w=\alpha^{*}\,\vb s^H\m R^{-1}\vb x$,
 The second term, $|\alpha|^2\,\vb s^H\m R^{-1}\vb s$, is a known constant (it does not depend on the data $\vb x$) and is absorbed into the threshold, so the only data-dependent quantity is $\mathrm{Re}\{\alpha^{*}\,\vb s^H\m R^{-1}\vb x\}$. This identifies $\vb s^H\m R^{-1}\vb x$ --- the whitening matched filter --- as the sufficient statistic. When the phase of $\alpha$ is unknown, the detector cannot exploit the real part specifically and instead uses the magnitude, yielding the
 matched-filter statistic $y=|\vb s^H\m R^{-1}\vb x|^2$ of Section~\ref{2.4}
 
+\subsection{The GLRT Amplitude Estimate (Gini's Equation 15)}
+\label{app:okd-glrt}
+In the \gls{okd} the target amplitude $\alpha$ is unknown. Treating it as a deterministic unknown and replacing it by its maximum-likelihood estimate --- the \gls{glrt} --- turns the $H_1$ quadratic form $q_1(\vb x)=(\vb x-\alpha\vb s)^H\m G^{-1}(\vb x-\alpha\vb s)$ into the expression used in the main text. This is Gini's equation~(15), derived below (Gini's symbols $\m M_x,\vb p,\vb z$ correspond to $\m G,\vb s,\vb x$ here).
+
+\paragraph{The estimate $\hat\alpha$.}
+Conditioned on the texture $\tau$, the $H_1$ density is proportional to $\exp\!\big(-(\vb x-\alpha\vb s)^H\m G^{-1}(\vb x-\alpha\vb s)/\tau\big)$, so maximising it over $\alpha$ is equivalent to \emph{minimising} the quadratic form (the positive factor $1/\tau$ does not affect the minimiser, so $\hat\alpha$ is independent of $\tau$),
+$$f(\alpha)=(\vb x-\alpha\vb s)^H\m G^{-1}(\vb x-\alpha\vb s)=\vb x^H\m G^{-1}\vb x-\alpha^{*}\vb s^H\m G^{-1}\vb x-\alpha\,\vb x^H\m G^{-1}\vb s+|\alpha|^2\,\vb s^H\m G^{-1}\vb s.$$
+Differentiating with respect to $\alpha^{*}$ (treating $\alpha,\alpha^{*}$ as independent) and setting the result to zero,
+$$\frac{\partial f}{\partial\alpha^{*}}=-\vb s^H\m G^{-1}\vb x+\alpha\,\vb s^H\m G^{-1}\vb s=0\quad\Longrightarrow\quad\boxed{\;\hat\alpha=\frac{\vb s^H\m G^{-1}\vb x}{\vb s^H\m G^{-1}\vb s}\;}$$
+the whitening matched filter normalised by its noise gain.
+
+\paragraph{Substituting back.}
+Write $\gamma=\vb s^H\m G^{-1}\vb x$ and $\beta=\vb s^H\m G^{-1}\vb s$ (real, positive), so that $\vb x^H\m G^{-1}\vb s=\gamma^{*}$ and $\hat\alpha=\gamma/\beta$. The three $\alpha$-dependent terms become
+$$\hat\alpha^{*}\vb s^H\m G^{-1}\vb x=\frac{|\gamma|^2}{\beta},\qquad\hat\alpha\,\vb x^H\m G^{-1}\vb s=\frac{|\gamma|^2}{\beta},\qquad|\hat\alpha|^2\,\vb s^H\m G^{-1}\vb s=\frac{|\gamma|^2}{\beta},$$
+and hence
+$$q_1(\vb x)=f(\hat\alpha)=\vb x^H\m G^{-1}\vb x-\frac{|\gamma|^2}{\beta}-\frac{|\gamma|^2}{\beta}+\frac{|\gamma|^2}{\beta}=\vb x^H\m G^{-1}\vb x-\frac{|\gamma|^2}{\beta}.$$
+Restoring $\gamma$ and $\beta$ gives Gini's equation~(15),
+$$\boxed{\;q_1(\vb x)=\vb x^H\m G^{-1}\vb x-\frac{|\vb s^H\m G^{-1}\vb x|^2}{\vb s^H\m G^{-1}\vb s}\;}$$
+
+\paragraph{Interpretation.}
+This is a ``complete the square'': $q_1$ is the total whitened energy $q_0(\vb x)=\vb x^H\m G^{-1}\vb x$ minus the part explained by a target along $\vb s$, namely the matched-filter energy $|\vb s^H\m G^{-1}\vb x|^2/(\vb s^H\m G^{-1}\vb s)$. It is therefore the \underline{residual} left after projecting the (whitened) data onto the target direction --- what a target cannot account for. For a \emph{random} (Swerling-I) amplitude $\alpha\sim\mathcal{CN}(0,2\sigma_a^2)$ one instead integrates over $\alpha$, giving Gini's equation~(14), which differs only by an extra $1/(2\sigma_a^2)$ added to the denominator $\vb s^H\m G^{-1}\vb s$; the two coincide when $\vb s^H\m G^{-1}\vb s\gg 1/(2\sigma_a^2)$, i.e.\ at high \gls{scr} or large $L$.
+
+\subsection{Radar Cross-Section and the Swerling Target Models}
+
+\paragraph{Radar cross-section.}
+The radar cross-section (\gls{rcs}) $\sigma$ quantifies how strongly a target reflects energy back to the radar. It is defined as the area that, intercepting the incident power density and re-radiating it isotropically, would reproduce the echo actually observed, $$\sigma=\lim_{R\to\infty}4\pi R^2\frac{|E_s|^2}{|E_i|^2},$$ where $E_i$ and $E_s$ are the incident and back-scattered field magnitudes and $R$ is the range. It has units of area but is \emph{not} the target's physical size: it depends on the target's shape, material, orientation (aspect angle), the wavelength and the polarisation. Through the radar range equation the received target power is proportional to $\sigma$, so in the signal model the target amplitude obeys $|\alpha|^2\propto\sigma$ --- the \gls{rcs} sets the echo strength, while $\alpha$ additionally carries the (unknown) phase.
+
+\paragraph{Why it fluctuates.}
+A real target is an extended body made of many individual scatterers (edges, corners, flat faces). Their echoes add coherently, and because the relative path lengths change by many wavelengths under even a fraction of a degree of aspect change, the returns swing between constructive and destructive interference. Consequently $\sigma$ --- and hence $|\alpha|^2$ --- fluctuates rapidly and unpredictably with aspect angle and time. A detector therefore cannot assume a fixed echo strength; the fluctuation must be modelled statistically, which is exactly what the Swerling models provide.
+
+\paragraph{The Swerling models.}
+Swerling (1954) introduced four standard models for target fluctuation, distinguished along two axes: the \underline{distribution} of the \gls{rcs}, and its \underline{decorrelation rate}. For the distribution, Swerling~I/II take the \gls{rcs} to be exponentially distributed (equivalently a Rayleigh echo amplitude, arising from a complex-Gaussian return), modelling a target of \emph{many scatterers of comparable size} (by the central limit theorem); Swerling~III/IV take a chi-square distribution with four degrees of freedom, modelling \emph{one dominant scatterer plus many small ones}. For the decorrelation, Swerling~I/III are \underline{slow} (scan-to-scan): the \gls{rcs} is constant over one dwell (\gls{cpi}) but independent between scans; Swerling~II/IV are \underline{fast} (pulse-to-pulse): independent from pulse to pulse. The non-fluctuating case of constant, known $\sigma$ is usually labelled Swerling~0 (or~V).
+\begin{center}
+\begin{tabular}{llll}
+\hline
+Model & \gls{rcs} distribution & Amplitude & Decorrelation \\
+\hline
+Swerling 0/V & constant & fixed & non-fluctuating \\
+Swerling I   & exponential & Rayleigh & scan-to-scan (slow) \\
+Swerling II  & exponential & Rayleigh & pulse-to-pulse (fast) \\
+Swerling III & chi-square (4 d.o.f.) & dominant$+$small & scan-to-scan (slow) \\
+Swerling IV  & chi-square (4 d.o.f.) & dominant$+$small & pulse-to-pulse (fast) \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Relevance to this work.}
+The two ways of handling the target amplitude in the optimum detector correspond directly to Swerling models. The \underline{Swerling~I} model --- $\alpha$ a zero-mean complex Gaussian, $\alpha\sim\mathcal{CN}(0,2\sigma_a^2)$, held constant over the \gls{cpi} (the time-on-target) but independent scan-to-scan --- is the one Gini uses for the random-amplitude detector: averaging the likelihood ratio over this Gaussian prior yields the $H_1$ quadratic form of equation~(14). Its power $|\alpha|^2$ is then exponentially distributed with mean $2\sigma_a^2$, matching the Swerling~I/II amplitude law. The \underline{non-fluctuating} case (deterministic $\alpha$) instead leads, when $\alpha$ is unknown, to the \gls{glrt} and the $H_1$ quadratic form of equation~(15) (Appendix~\ref{app:okd-glrt}). The choice between equations~(14) and~(15) is therefore exactly the choice between a Swerling~I (random, Gaussian) and a non-fluctuating (deterministic) target.
+
 \newpage
 \section{Action}
 \subsection{Questions}
@@ -511,5 +681,6 @@ matched-filter statistic $y=|\vb s^H\m R^{-1}\vb x|^2$ of Section~\ref{2.4}
 
 \paragraph{\textcolor{red}{W5 - Short Summary.}}
 Traditional target detectors can perform poorly when clutter is non-Gaussian and heterogeneous, violating their underlying assumptions. The optimum detector for K-distributed clutter is known but assumes the clutter statistics (texture and speckle covariance) are separately available, which is not the case in practice. This thesis builds on existing texture-estimation methods to investigate whether a practical form of the optimum detector can be realised and to assess its performance against traditional detectors. The main challenge is that these statistics are not directly observable from data, so it must be established whether they can be estimated accurately enough for the detector to be practical.
+
 
 \end{document}
