@@ -42,7 +42,7 @@ p.cModel.Ktype = 3;
 p.cModel.a = 0.5; 
 p.cModel.b = 1/p.cModel.a;
 
-[varsigma, tau, c, G] = gen_clutter_data(p, Nr);
+[varsigma, ~, ~, ~] = gen_clutter_data(p, Nr);
 
 % a = 0.5
 figure

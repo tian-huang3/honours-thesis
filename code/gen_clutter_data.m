@@ -72,7 +72,7 @@ fd = (2*vp/lambda) * (sin(theta)/PRF);      % Doppler freq of each patch (note r
                                        
 beta = (2 * vp)/(PRF * d);                  % clutter ridge slope
 
-if Dtype == 1                               % TO ASK
+if Dtype == 1                               % TO ASK: not used
     fd = fd + sqrt(u)*randn(size(fd));      % in the case of Gaussian clutter motion
 end
 
@@ -105,7 +105,7 @@ tau = sigma_c.^2;
 
 %% sum over patches (Melvin eq (13))
 Av = (sigma_c / sqrt(2)) .* (randn(Ntheta, Nr) + 1i * randn(Ntheta, Nr));
-c = dtheta * SSc * (Av .* DG);              % weights each patch by antenna gain DGß
+c = dtheta * SSc * (Av .* DG);              % weights each patch by antenna gain DG
 G = dtheta^2 * SSc * diag(DG.^2) * SSc';    % speckle covariance (tau = 1, no noise)
 
 %% add thermal noise at specified CNR (c + n)
