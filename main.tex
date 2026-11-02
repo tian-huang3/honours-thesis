@@ -7,7 +7,7 @@
 
 \title{Thesis Workbook}
 \author{z5360316}
-\date{September, 2026}
+\date{September 2026}
 
 \begin{document}
 
@@ -16,6 +16,7 @@
 \section{Radar and Signals Background}
 \label{sec:background}
 \subsection{Introduction}
+
 Effective target detection requires the suppression of clutter and interference. This is achieved by applying adaptive filters to the \gls{cut}.
 
 \subsection{Multichannel Space-Time (STAP) Array Radar}
@@ -28,7 +29,7 @@ Multichannel space-time array radar refers to advanced radar systems that combin
 \end{itemize}
 
 \subsection{Airborne Radar Signal Model}
-Consider an airborne radar with an along-track side looking linear array comprising $N$ antennas, with inter-element spacing $d$, transmitting $M$ pulses in a \gls{cpi} at the \acrlong{prf}, $f_{PRF}$. Let the radar be travelling at velocity $v_p$.  
+Consider an airborne radar with an along-track side looking linear array comprising $N$ antennas, with inter-element spacing $d$, transmitting $M$ pulses in a \gls{cpi} at the \acrlong{prf}, $f_\mathrm{PRF}$. Let the radar be travelling at velocity $v_p$.  
 
 \begin{figure}[h]
     \centering
@@ -56,10 +57,11 @@ For a narrow-band signal of wavelength $\lambda$, this path difference shows up 
 Hence, each step along the array adds a phase of $2\pi f_s$. This leads to the \underline{spatial steering vector}: $$\vb s_\text{sp} = \left[1\quad e^{j2\pi f_s}\quad\cdots\quad e^{j2\pi(N-1)f_s}\right]^T.$$
 
 \subsubsection{Dimension 2: Slow-time ($M$ pulses) encodes Doppler}
-Between pulses (spaced by the pulse repetition interval $T_r = 1/f_{PRF}$), a target moving with radial velocity $v_r$ changes its range by
+Between pulses (spaced by the pulse repetition interval $T_r = 1/f_\mathrm{PRF}$), a target moving with radial velocity $v_r$ changes its range by
 $\Delta R = v_r T_r$. Since each pulse travels to the target and back, the round-trip path changes by $2\Delta R$, which for a wavelength $\lambda$ appears as a phase shift from one pulse to the next of:
 $$\Delta\phi = \frac{2\pi}{\lambda}\,(2\Delta R)
              = \frac{2\pi}{\lambda}2v_r T_r = 2\pi f_d.$$
+
 As in the spatial case, a constant per-pulse phase step produces a phase ramp across the $M$ pulses; its rate is the \underline{normalised Doppler frequency}:
 $$f_d = \frac{2 v_r T_r}{\lambda} = \frac{2 v_r}{\lambda f_\textrm{PRF}},$$
 where the factor of two (absent in the spatial case) comes from the two-way propagation. Each pulse therefore adds a phase of $2\pi f_d$, giving the \underline{temporal steering vector}:
@@ -70,10 +72,10 @@ Note that only the radial movement of the target is considered, since any tangen
 
 Together, the two steering vectors capture the target's phase progression along the two axes: $\vb s_\text{sp}$ across the $N$ antennas (set by the angle) and $\vb s_\text{temp}$ across the $M$ pulses (set by the Doppler).
 
-\paragraph{Relating $M$ and $f_{PRF}$.}
-The $M$ pulses are slow-time samples taken at rate $f_{PRF}$, spaced by the pulse repetition interval $T_r = 1/f_{PRF}$. The total \underline{dwell} (coherent processing interval) is therefore:
-$$T_{CPI} = M\,T_r = \frac{M}{f_{PRF}}.$$
-These set two different quantities: $f_{PRF}$ is the slow-time sampling rate, fixing the unambiguous Doppler span (Nyquist) and hence the maximum unambiguous radial velocity $v_{\max} = \lambda f_{PRF}/4$; while $M$ fixes the Doppler resolution $\Delta f_d = f_{PRF}/{M} = 1/T_{CPI}$ (and the integration gain).
+\paragraph{Relating $M$ and $f_\mathrm{PRF}$.}
+The $M$ pulses are slow-time samples taken at rate $f_\mathrm{PRF}$, spaced by the pulse repetition interval $T_r = 1/f_\mathrm{PRF}$. The total \underline{dwell} (coherent processing interval) is therefore:
+$$T_{CPI} = M\,T_r = \frac{M}{f_\mathrm{PRF}}.$$
+These set two different quantities: $f_\mathrm{PRF}$ is the slow-time sampling rate, fixing the unambiguous Doppler span (Nyquist) and hence the maximum unambiguous radial velocity $v_{\max} = \lambda f_\mathrm{PRF}/4$; while $M$ fixes the Doppler resolution $\Delta f_d = f_\mathrm{PRF}/{M} = 1/T_{CPI}$ (and the integration gain).
 
 \subsubsection{Combining both dimensions: Space-time snapshot}
 A target at a given (angle, Doppler) produces, at each (antenna, pulse) sample, a phase that is the sum of its spatial phase (from the angle) and its temporal phase (from the Doppler) with respect to an arbitrary reference origin. The two phases add and thus the complex factors multiply: the sample at antenna $n$, pulse $m$ carries $(\vb s_\text{sp})_n(\vb s_\text{temp})_m$.\\
@@ -89,7 +91,7 @@ Vectorising lets us treat the joint space--time snapshot with standard vector
 detection theory, where a single $L\times L$ covariance matrix captures all spatial,
 temporal and space--time correlations at once.\\
 
-The clutter vector $\vb c = \sqrt{\tau} \vb q$ where the \underline{speckle} $\vb q$ is complex Gaussian distributed with zero mean and covariance matrix $\m G$ and $\tau$ is a random variable called the \underline{texture}. Thus, \emph{given $\tau$}, the received clutter is distributed as $\mathcal{CN}(\vb 0, \m R)$ where $\m R = \tau \m G$. For K-distributed clutter, the texture is drawn from the gamma distribution such that $\tau\sim\Gamma(a, b)$, where $a$ and $b$ are the shape and scale respectively.
+The clutter vector $\vb c = \sqrt{\tau} \vb q$ where the \underline{speckle} $\vb q$ is complex Gaussian distributed with zero mean and covariance matrix $\m G$ and $\tau$ is a random variable called the \underline{texture}. Thus, conditioned on the texture, the received clutter is distributed as $$\vb c \mid \tau \sim \mathcal{CN}(\vb 0, \tau\m G).$$ For K-distributed clutter, the texture is drawn from the gamma distribution such that $$\tau\sim\Gamma(a, b),$$ where $a$ and $b$ are the shape and scale respectively.
 
 \subsection{Clutter-Plus-Noise Covariance}
 The second-order statistics of the interference are captured by the $L\times L$
@@ -587,6 +589,220 @@ parameters \texttt{FBR}, \texttt{nbins}, \texttt{beta},
 
 % \subsubsection*{\texttt{gen\_clutter\_realisations.m}}
 % \lstinputlisting[style=matlab]{code/gen_clutter_realisations.m}
+
+
+
+
+
+
+\newpage
+\section{Simulation Code}\label{sec:code}
+
+This section documents the MATLAB code used to generate and process the simulated data in this thesis. Section~\ref{sec:code:model} gives the clutter model behind the generators. Each function then has its own subsection, and full listings are collected in Section~\ref{sec:code:listings}.
+
+\paragraph{Conventions.} $N$ is the number of spatial channels and $M$ the number of pulses in the coherent processing interval, so each snapshot has length $L=NM$. Angles are broadside angles $\theta$, as in Section~\ref{sec:background}: $\theta=0$ is broadside and $\theta=\pm90^\circ$ is along the array axis (the direction of flight). Space-time vectors are stacked \emph{space within time},
+\[
+  \vb s(f_s,f_d) = \vb s_\text{temp}(f_d)\otimes\vb s_\text{sp}(f_s),
+\]
+so the first $N$ entries belong to pulse $0$, the next $N$ to pulse $1$, and so on (MATLAB \texttt{kron(s\_temp,s\_sp)}). Table~\ref{tab:code:symbols} maps the symbols used here to the code variables.
+
+\begin{table}[ht]
+  \centering\small
+  \caption{Symbols and the corresponding variables in \texttt{gen\_clutter\_data.m}.}
+  \label{tab:code:symbols}
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Symbol & Code & Meaning \\
+    \midrule
+    $N$, $M$               & \texttt{p.radar.N}, \texttt{p.radar.M}           & channels, pulses \\
+    $f_\mathrm{PRF}=1/T_r$ & \texttt{p.radar.PRF}                             & pulse repetition frequency \\
+    $\lambda$, $d$         & \texttt{p.radar.lambda}, \texttt{p.radar.d}      & wavelength, element spacing \\
+    $v_p$                  & \texttt{p.radar.vp}                              & platform speed \\
+    $\theta_L$             & \texttt{p.radar.thetaL}                          & look direction (input in degrees) \\
+    $N_\theta$             & \texttt{p.cModel.Ntheta}                         & number of clutter patches \\
+    $a$, $b$               & \texttt{p.cModel.a}, \texttt{p.cModel.b}         & Gamma shape and scale of the texture \\
+    $u$                    & \texttt{p.cModel.u}                              & variance of the Doppler perturbation \\
+    CNR                    & \texttt{p.cModel.CNR}                            & clutter-to-noise ratio (dB) \\
+    $K$                    & \texttt{Nr}                                      & number of snapshots (range gates) \\
+    $\m V$                 & \texttt{S}                                       & patch steering vectors ($L\times N_\theta$) \\
+    $g_k$                  & \texttt{DG}                                      & antenna pattern weight of patch $k$ \\
+    $\alpha_{k\ell}$       & \texttt{Av}                                      & complex amplitude of patch $k$ in gate $\ell$ \\
+    $\tau_\ell$            & \texttt{tau}                                     & texture \\
+    $\m G$                 & \texttt{G}                                       & speckle covariance \\
+    $P_q$, $P_n$           & \texttt{Pq}, \texttt{Pn}                         & speckle power per element, noise power \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+\subsection{Clutter-Patch Model}\label{sec:code:model}
+
+The clutter generator uses the discrete clutter-patch model of Melvin~\cite{Melvin2004} (eq.~13), which follows Ward and Klemm. The ground at the range of interest is an iso-range ring, divided into $N_\theta$ patches at angles $\theta_k$, each a statistically independent scatterer. Each patch reflects the transmitted pulse with a random complex amplitude $\alpha_k$, weighted by the antenna pattern, and the clutter return from range gate $\ell$ is the coherent sum
+\begin{equation}
+  \vb c_\ell = \Delta\theta \sum_{k=1}^{N_\theta} g_k\,\alpha_{k\ell}\,\vb v_k,
+  \qquad \vb v_k = \vb s\big(f_s(\theta_k), f_d(\theta_k)\big),
+  \label{eq:code:patchsum}
+\end{equation}
+where $\Delta\theta$ is the patch width and $\vb v_k$ is the space-time steering vector of patch $k$. Collecting the $\vb v_k$ as columns gives the $L\times N_\theta$ patch steering matrix $\m V$. Only one iso-range ring is modelled, so there are no range ambiguities.
+
+\paragraph{Geometry.} The patches are spaced uniformly on $\theta\in[-\pi/2,\pi/2]$, the half-plane in front of the array (the back lobe is ignored). From Section~\ref{sec:clutter_ridge}, a patch at $\theta_k$ has spatial and normalised Doppler frequencies
+\begin{equation}
+  f_s(\theta_k) = \frac{d}{\lambda}\sin\theta_k, \qquad
+  f_d(\theta_k) = \frac{2v_pT_r}{\lambda}\sin\theta_k = \beta\, f_s(\theta_k),
+  \label{eq:code:freqs}
+\end{equation}
+so all patches lie on the clutter ridge of slope $\beta = 2v_pT_r/d$. The depression angle is taken as negligible (no $\cos\psi$ factor; see Section~\ref{sec:code:gcr}).
+
+\paragraph{Antenna pattern.} Each patch is weighted by
+\begin{equation}
+  g_k = \Big[\tfrac12\big(1+\cos 2(\theta_k-\theta_L)\big)\Big]^2 = \cos^4(\theta_k-\theta_L),
+\end{equation}
+a two-way (transmit times receive) $\cos^2$ element pattern steered to the look direction $\theta_L$. Since $\tfrac12(1+\cos2x)=\cos^2x$, squaring it gives the transmit-times-receive product. It applies to amplitude, so the power weight is $g_k^2=\cos^8(\theta_k-\theta_L)$.
+
+The weighting is needed because the patches are not illuminated equally. By the radar equation, the power returned by a patch is proportional to $G_t(\theta_k)\,G_r(\theta_k)\,\sigma_k$, where $G_t$ and $G_r$ are the transmit and receive gains in the patch's direction and $\sigma_k$ is its radar cross-section. Clutter in the main beam therefore dominates, while sidelobe clutter is attenuated. The $\cos^2$ shape is an idealised directive element, not the measured pattern of a particular antenna, and it is broad: the two-way power pattern falls by $3$\,dB at $\theta-\theta_L\approx\pm23.5^\circ$, a two-way beamwidth of about $47^\circ$, compared with the $13$--$16^\circ$ quoted for the Ingara and simulated data in~\cite{Aboutanios2020}.
+
+% ---------------------------------------------------------------------
+\subsection{\texttt{gen\_clutter\_data.m}: clutter-plus-noise snapshots}\label{sec:code:gcd}
+
+\paragraph{Purpose.} The function
+\begin{center}
+  \texttt{[varsigma, tau, c, G] = gen\_clutter\_data(p, Nr)}
+\end{center}
+returns an $L\times K$ matrix \texttt{varsigma} whose columns are $K$ clutter-plus-noise snapshots $\vv\varsigma_\ell = \vb c_\ell + \vb n_\ell$, one per range gate. Optionally the clutter is compound-Gaussian with a Gamma-distributed texture, giving K-distributed amplitudes. The optional outputs are the texture actually applied (\texttt{tau}), the clutter alone without noise (\texttt{c}), and the exact speckle covariance (\texttt{G}).
+
+\paragraph{What it computes.}
+\begin{enumerate}
+  \item \textbf{Patch frequencies} (lines 55--64). $N_\theta$ angles are spaced uniformly on $[-\pi/2,\pi/2]$, and \eqref{eq:code:freqs} gives $f_s$ and $f_d$. If \texttt{Dtype = 1}, each Doppler is perturbed by $\sqrt{u}\,\epsilon_k$ with $\epsilon_k\sim\mathcal N(0,1)$, which widens the ridge to mimic internal clutter motion. The perturbation is drawn once per call and shared by all $K$ snapshots. Note that $u$ is a variance in normalised Doppler (cycles per pulse squared), not a velocity.
+  \item \textbf{Antenna pattern} (lines 66--67). The weights $g_k$ above, as an $N_\theta\times1$ vector.
+  \item \textbf{Steering matrix} (lines 69--76). Column $k$ of $\m V$ is $\vb v_k=\vb s_\text{temp}(f_{d,k})\otimes\vb s_\text{sp}(f_{s,k})$.
+  \item \textbf{Texture} (lines 78--88). A scale $\sigma_{c}=\sqrt{\tau}$ is drawn according to \texttt{Ktype} (see below), with $\tau\sim\Gamma(a,b)$.
+  \item \textbf{Clutter and speckle covariance} (lines 90--93). The amplitudes are $\alpha_{k\ell}=\sigma_{c}\,z_{k\ell}$ with $z_{k\ell}$ i.i.d.\ $\mathcal{CN}(0,1)$ (\texttt{(randn+1i*randn)/sqrt(2)}). All $K$ snapshots are formed at once as $\m C = \Delta\theta\,\m V\,(\m A\odot\vb g\vb 1^{\mathsf T})$, which is \eqref{eq:code:patchsum} in matrix form. The speckle covariance $\m G$ of \eqref{eq:code:G} is computed from the same $\m V$ and $\vb g$.
+  \item \textbf{Noise} (lines 95--101). White noise $\vb n_\ell\sim\mathcal{CN}(\vb 0,P_n\m I)$ is added, with $P_n = P_q\,10^{-\mathrm{CNR}/10}$ and $P_q=(\Delta\theta)^2\sum_k g_k^2$ the expected speckle power per element (the diagonal of $\m G$, see below). Because $P_q$ does not depend on the texture, the noise floor is fixed.
+\end{enumerate}
+
+\paragraph{Texture options.}
+\begin{description}
+  \item[\texttt{Ktype = 0}] $\tau=1$. The clutter is Gaussian with covariance $\m G$.
+  \item[\texttt{Ktype = 1}] One $\tau\sim\Gamma(a,b)$ shared by all patches and all $K$ snapshots in the call. Within one call the data are therefore homogeneous (Gaussian clutter scaled by $\sqrt\tau$).
+  \item[\texttt{Ktype = 2}] An independent $\tau_k$ for each \emph{patch}, shared across snapshots. This changes the \emph{shape} of the clutter spectrum rather than its overall power, so it does not produce the $\m R=\tau\m G$ structure, and the data remain Gaussian from snapshot to snapshot.
+  \item[\texttt{Ktype = 3}] An independent $\tau_\ell\sim\Gamma(a,b)$ for each \emph{range gate} (a $1\times K$ row), shared by all patches in that gate. Then $\vb c_\ell=\sqrt{\tau_\ell}\,\vb q_\ell$ with $\vb q_\ell\sim\mathcal{CN}(\vb 0,\m G)$, which is the compound-Gaussian (SIRV) model of Section~\ref{sec:okd}, and the marginal amplitude is K-distributed with shape $a$. This is the option used for the compound-Gaussian experiments.
+\end{description}
+MATLAB's \texttt{gamrnd(a,b)} uses $b$ as a \emph{scale}, so $\bb E[\tau]=ab$; setting $b=1/a$ gives a unit-mean texture.
+
+\paragraph{Covariance.} Conditional on the texture, the patch amplitudes are independent with $\bb E[\alpha_{k\ell}\alpha_{k'\ell}^*] = \tau_\ell\,\delta_{kk'}$. From \eqref{eq:code:patchsum},
+\[
+  \bb E[\vb c_\ell\vb c_\ell^{H}]
+  = (\Delta\theta)^2\sum_{k}\sum_{k'} g_kg_{k'}\,\bb E[\alpha_{k\ell}\alpha_{k'\ell}^*]\,\vb v_k\vb v_{k'}^{H}
+  = \tau_\ell\,(\Delta\theta)^2\sum_{k}g_k^2\,\vb v_k\vb v_k^{H},
+\]
+because the cross terms vanish. Hence, for \texttt{Ktype = 0} or \texttt{3},
+\begin{equation}
+  \m R_\ell = \tau_\ell\,\m G + P_n\m I, \qquad
+  \m G = (\Delta\theta)^2\,\m V\,\mathrm{diag}(g_1^2,\dots,g_{N_\theta}^2)\,\m V^{H},
+  \label{eq:code:G}
+\end{equation}
+with $\tau_\ell=1$ for \texttt{Ktype = 0}. Every entry of $\vb v_k$ has unit modulus, so each diagonal entry of $\m G$ equals $(\Delta\theta)^2\sum_k g_k^2=P_q$, and the CNR is $P_q/P_n$ for a unit texture. Because $\m G$ is computed from the same $\m V$ and $\vb g$ that generate the data, it is the exact speckle covariance against which estimators can be scored. It depends only on the geometry, so every call with the same parameters (and \texttt{Dtype = 0}) has the same $\m G$. With \texttt{Dtype = 1} the Doppler perturbation is redrawn on each call, so $\m G$ must be taken from the same call as the data.
+
+\paragraph{Clutter rank.} $\m G$ is a sum of rank-one terms $\vb v_k\vb v_k^{H}$ whose frequencies all lie on the ridge. Its effective rank is therefore close to Brennan's rule, $r\approx N+(M-1)\beta$, rather than $L$. With noise added, $\m R$ is full rank, and the clutter rank is the number of eigenvalues of $\m R$ that stand clearly above $P_n$. Table~\ref{tab:code:rank} compares the two for $N=4$, $M=16$, $f_\mathrm{PRF}=1500$\,Hz, $d=\lambda/2$ at $1.33$\,GHz and $\theta_L=0$. For integer $\beta$ the rank is exact. For non-integer $\beta$ the eigenvalues tail off gradually, so the effective rank depends on the threshold (and in practice on the CNR).
+
+\begin{table}[ht]
+  \centering
+  \caption{Brennan's rule against the eigenvalues of $\m G$ ($N=4$, $M=16$, $N_\theta=3600$).}
+  \label{tab:code:rank}
+  \begin{tabular}{@{}cccc@{}}
+    \toprule
+    $v_p$ (m/s) & $\beta$ & $N+(M-1)\beta$ & eigenvalues above $-40$\,dB \\
+    \midrule
+    $84.5$ & $1.00$ & $19.0$ & $19$ (the 20th is at $-153$\,dB) \\
+    $75.5$ & $0.89$ & $17.4$ & $18$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Validation.} The generator has been checked against the theory it implements:
+\begin{itemize}
+  \item the eigenvalues of the \gls{scm} of $K=1024$ Gaussian snapshots ($N=8$, $M=16$) drop to the noise floor at the index predicted by Brennan's rule;
+  \item with \texttt{Ktype = 3}, the histogram of $|\varsigma|$ matches the K-distribution PDF for $a=0.5$ and $a=20$;
+  \item the recovered speckle $\vb q_\ell=\vb c_\ell/\sqrt{\tau_\ell}$ has Rayleigh amplitude and uniform phase, and after whitening by the non-zero eigenpairs of $\m G$ its squared norm follows $\Gamma(r,1)$, as expected for $\vb q\sim\mathcal{CN}(\vb 0,\m G)$;
+  \item the \gls{mvdr} spectrum of $\m R=\m G+P_n\m I$ (Section~\ref{sec:code:mvdr}) shows the ridge along $f_d=\beta f_s$.
+\end{itemize}
+
+\paragraph{Example.} $K$ compound-Gaussian range gates with independent unit-mean textures, a fixed noise floor and the exact speckle covariance:
+\begin{lstlisting}[style=matlab]
+p.cModel.Ktype = 3;  p.cModel.a = 1;  p.cModel.b = 1/p.cModel.a;
+[X, tau, ~, G] = gen_clutter_data(p, K);       % X is NM x K, tau is 1 x K
+Pn = real(G(1,1)) * 10^(-p.cModel.CNR/10);     % noise power, from diag(G) = Pq
+R  = G + Pn*eye(size(G));                       % true covariance for tau = 1
+\end{lstlisting}
+
+% ---------------------------------------------------------------------
+\subsection{\texttt{mvdr\_spectrum.m}: angle--Doppler MVDR spectrum}\label{sec:code:mvdr}
+
+\paragraph{Purpose.} \texttt{P = mvdr\_spectrum(R, p, theta\_deg, fd)} evaluates the \gls{mvdr} (optimum) spectrum
+\[
+  P(\theta,f_d) = \frac{1}{\vb s^H(\theta,f_d)\,\m R^{-1}\,\vb s(\theta,f_d)}
+\]
+on a grid of look angles \texttt{theta\_deg} (degrees) and normalised Dopplers \texttt{fd}, for any covariance \texttt{R} (true or estimated). $P$ is the interference power left at the output of the \gls{mvdr} filter $\vb w=\m R^{-1}\vb s/(\vb s^H\m R^{-1}\vb s)$ steered to $(\theta,f_d)$, so it maps where the interference lies in the angle--Doppler plane. It is the denominator of the \gls{amf} evaluated over every look direction.
+
+\paragraph{What it computes.} $\m R^{-1}$ is formed once (line 14). The spatial steering vectors for all look angles are built as an $N\times N_\theta$ matrix (lines 16--17). For each Doppler (lines 21--25) the full $L\times N_\theta$ set of space-time steering vectors is formed with one Kronecker product, and $\vb s^H\m R^{-1}\vb s$ is evaluated for every column at once. The output is $N_{f_d}\times N_\theta$ (rows Doppler, columns angle), ready for \texttt{imagesc(theta\_deg, fd, \ldots)}.
+
+\paragraph{Usage notes.}
+\begin{itemize}
+  \item The steering vectors are not normalised, so far from the ridge ($\m R\approx P_n\m I$) the spectrum is $P_n/L$. Plotting $10\log_{10}(L\,P/P_n)$ puts the noise floor at $0$\,dB.
+  \item With $\m R$ replaced by an \gls{scm} from $K$ snapshots, $\bb E[\hat{\m R}^{-1}]=\frac{K}{K-L}\m R^{-1}$, so the whole spectrum is biased low by about $10\log_{10}\frac{K-L}{K}$\,dB (about $-3$\,dB at $K=2L$), and its floor acquires random structure from the poorly estimated noise eigenvectors.
+\end{itemize}
+
+% ---------------------------------------------------------------------
+\subsection{\texttt{run\_trials.m}: Monte Carlo AMF and NAMF statistics}\label{sec:code:trials}
+
+\paragraph{Purpose.} \texttt{[y\_AMF, y\_NAMF] = run\_trials(p, Kt, s, Ntrials)} returns \texttt{Ntrials} independent realisations of the \gls{amf} and \gls{namf} statistics under $H_0$ (no target), for a target steering vector \texttt{s} and $K_t$ training gates. It is used to set thresholds empirically and to measure the actual $P_{fa}$ when the clutter does not match the design assumptions.
+
+\paragraph{What it computes.} Each trial (lines 16--30) draws $K_t+1$ fresh range gates from \texttt{gen\_clutter\_data}, so every trial is independent. The first gate is the \gls{cut} and the remaining $K_t$ are the training data; since the gates are generated independently, their position relative to the \gls{cut} does not matter here. The \gls{scm} $\hat{\m R}_t$ is formed from the training gates only, which keeps the filter independent of the \gls{cut}. Both statistics are then computed with linear solves (\texttt{Rt\_hat \textbackslash{} s}) rather than an explicit inverse:
+\[
+  y_\text{AMF}=\frac{|\vb s^H\hat{\m R}_t^{-1}\vb x|^2}{\vb s^H\hat{\m R}_t^{-1}\vb s},
+  \qquad
+  y_\text{NAMF}=\frac{y_\text{AMF}}{\vb x^H\hat{\m R}_t^{-1}\vb x}.
+\]
+
+\paragraph{Typical use.} Thresholds are calibrated in Gaussian clutter (\texttt{Ktype = 0}) as the $(1-P_{fa})$ quantile of the statistics, then applied to fresh K-distributed trials (\texttt{Ktype = 3}) to measure the actual false-alarm rate.
+
+% ---------------------------------------------------------------------
+\subsection{\texttt{gen\_clutter\_realisations.m}: bulk homogeneous data}\label{sec:code:gcr}
+
+\paragraph{Purpose.} This script (supplied by E.~Aboutanios) generates large sets of Gaussian (homogeneous) clutter realisations and saves them to disk, using the clutter model of Klemm~\cite{Klemm2002} (p.~56). The parameters (carrier frequency $1.33$\,GHz, bandwidth $140$\,MHz, $f_\mathrm{PRF}=1500$\,Hz, $v_p=75.5$\,m/s, altitude $3.3$\,km) describe an L-band side-looking airborne radar. To make the data heterogeneous, multiply each snapshot by a Gamma-distributed texture.
+
+\paragraph{Differences from \texttt{gen\_clutter\_data.m}.}
+\begin{itemize}
+  \item The ring is at slant range $R=\sqrt2\,H$, so the depression angle is $\psi=\arcsin(H/R)=45^\circ$. It enters both frequencies through a factor $\cos\psi$ (the radial velocity becomes $v_p\sin\theta\cos\psi$):
+        \[
+          f_s=\frac{d}{\lambda}\sin\theta\cos\psi, \qquad
+          f_d=\frac{2v_pT_r}{\lambda}\sin\theta\cos\psi.
+        \]
+  \item The pattern includes elevation, $D=\cos^2(\theta-\theta_L)\cos^2(\psi-\psi_L)$, applied two-way ($D^2$ on amplitude).
+  \item Steering vectors are normalised to unit norm.
+  \item No thermal noise is added.
+  \item The variable names differ: \texttt{Ns} is the number of channels ($N$), \texttt{Np} the number of pulses ($M$), \texttt{N} the snapshot length $L$, and the script's \texttt{phi} is the azimuth called $\theta$ here (its \texttt{theta} is the depression angle $\psi$).
+\end{itemize}
+
+\paragraph{Output.} \texttt{Nfiles} files are saved, each holding \texttt{CMR}, an $L\times N_R\times500$ array ($N_R$ range gates for each of 500 realisations). The scenario parameters are saved separately.
+
+\paragraph{Before running.} The number of range gates \texttt{NR} is never defined, so it must be set (for example, $N_R=2L$ for the Reed--Mallett--Brennan rule). With the default $N=8$ and $M=512$, each file is about $33N_R$\,MB, so reduce \texttt{Np} for routine experiments. The parameters \texttt{FBR}, \texttt{nbins}, \texttt{beta}, \texttt{dR} and \texttt{rho\_phi} are defined but not used.
+
+% ---------------------------------------------------------------------
+\subsection{Listings}\label{sec:code:listings}
+
+\subsubsection*{\texttt{gen\_clutter\_data.m}}
+\lstinputlisting[style=matlab]{code/gen_clutter_data.m}
+
+% \subsubsection*{\texttt{mvdr\_spectrum.m}}
+% \lstinputlisting[style=matlab]{code/mvdr_spectrum.m}
+
+% \subsubsection*{\texttt{run\_trials.m}}
+% \lstinputlisting[style=matlab]{code/run_trials.m}
+
+% \subsubsection*{\texttt{gen\_clutter\_realisations.m}}
+% \lstinputlisting[style=matlab]{code/gen_clutter_realisations.m}
+
 
 \newpage
 \section{Problem Statement and Research Gap}
