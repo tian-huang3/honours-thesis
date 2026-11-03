@@ -1,7 +1,8 @@
 function [y_AMF, y_NAMF] = run_trials(p, Kt, s, Ntrials)
 
 % run_trials():
-% - Monte Carlo H0 (no target) trials of the AMF and NAMF
+% runs Monte Carlo H0 (no target) trials of the AMF and NAMF and returns
+% the test statistics
 %
 % inputs: p: parameter struct (as for gen_clutter_data)
 %         Kt: number of training cells
@@ -18,7 +19,7 @@ for n = 1:Ntrials
 
     x_CUT = varsigma(:, 1);
     training_cells = varsigma(:, 2:end);
-    Rt_hat = (training_cells * training_cells')/Kt;
+    Rt_hat = (training_cells * training_cells') / Kt;
 
     w = Rt_hat \ s;
     num = abs(w' * x_CUT)^2;

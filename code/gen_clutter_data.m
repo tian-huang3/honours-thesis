@@ -17,10 +17,15 @@ function [varsigma, tau, c, G, R, Pn, Pq, beta] = gen_clutter_data(p, Nr)
 %           p.cModel - structure containing the clutter parameters and options
 %               p.cModel.Ntheta: Number of clutter patches
 %               p.cModel.Ktype: Model type
-%                   0 - standard (fixed tau = 1) for all azimuth angles & range gates
-%                   1 - same texture applied to all azimuth angles, 
-%                   2 - texture varies with azimuth,
-%                   3 - different texture for each range cell 
+%                   0 - standard (fixed tau = 1) for all azimuth angles &
+%                   range gates (Gaussian clutter)
+%                   1 - same texture (from Gamma dist.) applied to all
+%                   azimuth angles (conditioned on tau, is complex
+%                   Gaussian)
+%                   2 - texture varies with azimuth, (by CLT, textures avg
+%                   out in coherent sum => Gaussian)
+%                   3 - different texture for each range cell
+%                   (K-distributed)
 %               p.cModel.Dtype: 
 %                   0 - no clutter motion
 %                   1 - clutter motion modelled as Gaussian
@@ -29,7 +34,7 @@ function [varsigma, tau, c, G, R, Pn, Pq, beta] = gen_clutter_data(p, Nr)
 %               p.cModel.u: variance of normalised Doppler ((cycles/pulse)^2)
 %               p.cModel.CNR: clutter to noise ratio (dB)
 %         Nr: Number of snapshots to generate (number of range gates)
-% outputs: varsigma: L (= NM) x Nr clutter + noise snapshots
+% returns: varsigma: L (= NM) x Nr clutter + noise snapshots
 %          tau: texture actually applied (scalar, Ntheta x 1 or 1 x Nr depending on Ktype)
 %          c: clutter snapshots
 %          G: speckle covariance matrix
@@ -50,14 +55,14 @@ lambda = p.radar.lambda;
 d = p.radar.d;
 PRF = p.radar.PRF;
 
-a = p.cModel.a;
-b = p.cModel.b;
+a = p.cModel.a;    % bigger a = more homogeneous, smaller a = more heterogeneous
+b = p.cModel.b; 
 CNR = p.cModel.CNR;
 Ktype = p.cModel.Ktype;
 Dtype = p.cModel.Dtype;
 u = p.cModel.u;
 
-L = N * M;
+NM = N * M;
 
 %% patch geometry around iso-range ring
 theta = linspace(-pi/2, pi/2, Ntheta);      % theta (rad)
@@ -83,7 +88,7 @@ DG = transpose((0.5 * (1 + cos(2*(theta-thetaL)))).^2);
 nv = (0:N - 1).';
 mv = (0:M - 1).';
 
-SSc = zeros(L, Ntheta);                     % L x Ntheta patch steering matrix (each column is the 
+SSc = zeros(NM, Ntheta);                     % L x Ntheta patch steering matrix (each column is the 
                                             % N x M (=L) spatio-temporal steering matrix for each patch)
 for patch = 1:Ntheta
     s_sp = exp(1i * 2 * pi * fs(patch) * nv);
@@ -114,8 +119,8 @@ Pq = dtheta^2 * sum(DG.^2);
 Pn = (Pq) * 10^(-CNR/10);
 sigma_n = sqrt(Pn/2);
 
-varsigma = c + sigma_n * (randn(L, Nr) + 1i*randn(L, Nr));
+varsigma = c + sigma_n * (randn(NM, Nr) + 1i*randn(NM, Nr));
 
-R = G + Pn*eye(L);
+R = G + Pn*eye(NM);
 
 end
