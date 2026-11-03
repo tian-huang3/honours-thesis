@@ -116,7 +116,7 @@ nv = (0:p.radar.N - 1).';       % antenna indices
 mv = (0:p.radar.M - 1).';       % pulse indices
 
 theta_t = 0;                    % hypothesised target at angle 0 deg (broadside)                                
-fd_t = 0;                        % hypothesised target has zero Doppler
+fd_t = 0;                       % hypothesised target has zero Doppler
 
 fs_t = (p.radar.d/p.radar.lambda) * sind(theta_t);      % target spatial frequency
 s_sp = exp(1i * 2 * pi * fs_t * nv);                    % N x 1, phase across antennas (spatial steering vec)
@@ -141,14 +141,15 @@ Ntrials = 10000;
 
 % set thresholds from Gaussian clutter
 p.cModel.Ktype = 0;
-[yAMF_G, yNAMF_G] = run_trials(p, Kt, s, Ntrials);
+alpha = 0;
+[yAMF_G, yNAMF_G] = run_trials(p, Kt, s, alpha, Ntrials);
 gamma_AMF = quantile(yAMF_G, 1 - Pfa);
 gamma_NAMF = quantile(yNAMF_G, 1 - Pfa);
 
 % apply the same thresholds in K-distributed clutter (fresh trials)
 p.cModel.Ktype = 3;
 p.cModel.a = 1; p.cModel.b = 1/p.cModel.a;
-[yAMF_K, yNAMF_K] = run_trials(p, Kt, s, Ntrials);
+[yAMF_K, yNAMF_K] = run_trials(p, Kt, s, alpha, Ntrials);
 
 Pfa_AMF = mean(yAMF_K > gamma_AMF);
 Pfa_NAMF = mean(yNAMF_K > gamma_NAMF);
@@ -269,23 +270,49 @@ s_sp = exp(1i * 2 * pi * fs_t * nv);                    % N x 1, phase across an
 s_temp = exp(1i * 2 * pi * fd_t  * mv);                 % M x 1, phase across pulses (temporal steering vec)
 s = kron(s_temp, s_sp);                                 % NM x 1, space-time steering (space-within-time - consistent with clutter)
 
-% H0 thresholds at the target Pfa
+% H0 thresholds at the target Pfa (alpha = 0)
 Pfa = 0.01;
 Ntrials = 2000;
 
-[y_AMF, y_NAMF, y_OKD] = run_trials_Pd(p, Kt, s, 0, Ntrials, G, Pn);
+[y0_AMF, y0_NAMF, y0_OKD] = run_trials(p, Kt, s, 0, Ntrials, G, Pn);
 
+gamma_AMF = quantile(y0_AMF, 1 - Pfa);
+gamma_NAMF = quantile(y0_NAMF, 1 - Pfa);
+gamma_OKD = quantile(y0_OKD, 1 - Pfa);
 
+fprintf("Pfa check: AMF %.3f NAMF %.3f OKD %.3f\n", mean(y0_AMF >= ...
+    gamma_AMF), mean(y0_NAMF >= gamma_NAMF), mean(y0_OKD >= gamma_OKD));
 
+% Pd vs SNR
+SNR = -22:2:-1; % dB
+Pd_AMF = zeros(size(SNR)); 
+Pd_NAMF = zeros(size(SNR)); 
+Pd_OKD = zeros(size(SNR));
 
+for k = 1:length(SNR)
+    alpha = sqrt(Pn * 10^(SNR(k)/10));
+    
+    [y1_AMF, y1_NAMF, y1_OKD] = run_trials(p, Kt, s, alpha, Ntrials, G, Pn);
 
+    Pd_AMF(k) = mean(y1_AMF >= gamma_AMF);
+    Pd_NAMF(k) = mean(y1_NAMF >= gamma_NAMF);
+    Pd_OKD(k) = mean(y1_OKD >= gamma_OKD);
 
+    fprintf("SNR %3d dB, P_d: AMF %.3f NAMF %.3f OKD %.3f\n", ...
+        SNR(k), Pd_AMF(k), Pd_NAMF(k), Pd_OKD(k));
+end
 
-
-
-
-
-
+% plot
+figure('Color', 'w')
+plot(SNR, Pd_OKD, '-o', SNR, Pd_NAMF, '-s', SNR, Pd_AMF, '-^', ...
+    'LineWidth', 1.4);
+grid on;
+ylim([0, 1])
+xlabel('SNR (dB)')
+ylabel('P_d')
+legend('OKD', 'NAMF', 'AMF', 'Location', 'southeast');
+title(sprintf("P_d vs SNR, K-distributed Clutter (a = %.1f, CNR = " + ...
+    "%d dB), P_{fa} = 10^{-2} ", p.cModel.a, p.cModel.CNR));
 
 %% save all figs
 % allFigures = allchild(groot); 
