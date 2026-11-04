@@ -74,8 +74,8 @@ Together, the two steering vectors capture the target's phase progression along 
 
 \paragraph{Relating $M$ and $f_\mathrm{PRF}$.}
 The $M$ pulses are slow-time samples taken at rate $f_\mathrm{PRF}$, spaced by the pulse repetition interval $T_r = 1/f_\mathrm{PRF}$. The total \underline{dwell} (coherent processing interval) is therefore:
-$$T_{CPI} = M\,T_r = \frac{M}{f_\mathrm{PRF}}.$$
-These set two different quantities: $f_\mathrm{PRF}$ is the slow-time sampling rate, fixing the unambiguous Doppler span (Nyquist) and hence the maximum unambiguous radial velocity $v_{\max} = \lambda f_\mathrm{PRF}/4$; while $M$ fixes the Doppler resolution $\Delta f_d = f_\mathrm{PRF}/{M} = 1/T_{CPI}$ (and the integration gain).
+$$T_\mathrm{CPI} = M\,T_r = \frac{M}{f_\mathrm{PRF}}.$$
+These set two different quantities: $f_\mathrm{PRF}$ is the slow-time sampling rate, fixing the unambiguous Doppler span (Nyquist) and hence the maximum unambiguous radial velocity $v_{\max} = \lambda f_\mathrm{PRF}/4$; while $M$ fixes the Doppler resolution $\Delta f_d = f_\mathrm{PRF}/{M} = 1/T_\mathrm{CPI}$ (and the integration gain).
 
 \subsubsection{Combining both dimensions: Space-time snapshot}
 A target at a given (angle, Doppler) produces, at each (antenna, pulse) sample, a phase that is the sum of its spatial phase (from the angle) and its temporal phase (from the Doppler) with respect to an arbitrary reference origin. The two phases add and thus the complex factors multiply: the sample at antenna $n$, pulse $m$ carries $(\vb s_\text{sp})_n(\vb s_\text{temp})_m$.\\
@@ -261,8 +261,15 @@ $$y_{\text{NAMF}} = \frac{|\vb s^H\hat{\m R}_t^{-1}\vb x|^2}
    \;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma.$$
 Because the unknown local power appears in both numerator and denominator, it cancels, so the \gls{namf} is \gls{cfar} with respect to the texture and is the natural baseline in spiky, non-Gaussian clutter.
 
+\subsection{Kelly's Generalised Likelihood Ratio Test}
+The \gls{amf} and \gls{namf} are \underline{two-step} detectors: the covariance is estimated from the training data, then a fixed matched-filter (and normalisation) is applied to the \gls{cut}. Kelly (1986) instead derives the \underline{exact one-step} \gls{glrt}, jointly maximising the likelihood ratio over the unknown amplitude $\alpha$ while treating the \gls{cut} and the training data \emph{together} as a single composite hypothesis test. The resulting statistic is
+$$y_{\text{Kelly}} = \frac{|\vb s^H\hat{\m R}_t^{-1}\vb x|^2}{\big(\vb s^H\hat{\m R}_t^{-1}\vb s\big)\big(K_t + \vb x^H\hat{\m R}_t^{-1}\vb x\big)}\;\underset{H_0}{\overset{H_1}{\gtrless}}\;\gamma,$$
+where $\hat{\m R}_t$ is the \gls{scm} from $K_t$ training cells.
+
+The three traditional detectors differ only in the \emph{second} denominator factor: it is $1$ for the \gls{amf}, $\vb x^H\hat{\m R}_t^{-1}\vb x$ for the \gls{namf}, and $K_t + \vb x^H\hat{\m R}_t^{-1}\vb x$ for Kelly's \gls{glrt} --- so Kelly's test \underline{interpolates} between the two. When the training support is large, $K_t\gg\vb x^H\hat{\m R}_t^{-1}\vb x$, the constant $K_t$ dominates and Kelly's statistic reduces to the \gls{amf} (the extra constant being absorbed into the threshold); conversely, the \gls{amf} is precisely the two-step approximation to Kelly's one-step test obtained by neglecting the data-dependent term. All three possess the \gls{cfar} property in homogeneous Gaussian clutter. Crucially, however, all three are derived under the \underline{Gaussian, homogeneous} assumption: they are mismatched to compound-Gaussian sea clutter, which motivates the detectors of the following section.
+
 \subsection{Limitations}
-Both detectors are derived under the Gaussian, homogeneous assumption and rely on the \gls{scm}. In realistic sea clutter two problems arise. First, the clutter is compound-Gaussian: the varying texture $\tau$ biases the \gls{scm}, which mixes the texture and speckle together and cannot recover the speckle covariance $\m G$ alone. Second, the clutter is heterogeneous: the shared-statistics assumption underlying the training set breaks down, limiting the amount of usable secondary data. These limitations motivate detectors built on the compound-Gaussian model (the \gls{ten} detector and the \gls{okd}) discussed in Sections~\ref{sec:ten} and ~\ref{sec:okd}.
+All three detectors are derived under the Gaussian, homogeneous assumption and rely on the \gls{scm}. In realistic sea clutter two problems arise. First, the clutter is compound-Gaussian: the varying texture $\tau$ biases the \gls{scm}, which mixes the texture and speckle together and cannot recover the speckle covariance $\m G$ alone. Second, the clutter is heterogeneous: the shared-statistics assumption underlying the training set breaks down, limiting the amount of usable secondary data. These limitations motivate detectors built on the compound-Gaussian model (the \gls{ten} detector and the \gls{okd}) discussed in Sections~\ref{sec:ten} and~\ref{sec:okd}.
 
 \newpage
 \section{Compound-Gaussian Detectors}
@@ -1001,7 +1008,105 @@ $$\boxed{\;q_1(\vb x)=\vb x^H\m G^{-1}\vb x-\frac{|\vb s^H\m G^{-1}\vb x|^2}{\vb
 \paragraph{Interpretation.}
 This is a ``complete the square'': $q_1$ is the total whitened energy $q_0(\vb x)=\vb x^H\m G^{-1}\vb x$ minus the part explained by a target along $\vb s$, namely the matched-filter energy $|\vb s^H\m G^{-1}\vb x|^2/(\vb s^H\m G^{-1}\vb s)$. It is therefore the \underline{residual} left after projecting the (whitened) data onto the target direction --- what a target cannot account for. For a \emph{random} (Swerling-I) amplitude $\alpha\sim\mathcal{CN}(0,2\sigma_a^2)$ one instead integrates over $\alpha$, giving Gini's equation~(14), which differs only by an extra $1/(2\sigma_a^2)$ added to the denominator $\vb s^H\m G^{-1}\vb s$; the two coincide when $\vb s^H\m G^{-1}\vb s\gg 1/(2\sigma_a^2)$, i.e.\ at high \gls{scr} or large $L$.
 
+\subsection{The K-Distribution Amplitude PDF}
+\label{app:kdist}
+
+This derivation shows how the K-distribution arises from the compound-Gaussian
+model $c=\sqrt{\tau}\,q$, by averaging a Rayleigh amplitude over a Gamma
+texture.
+
+\paragraph{Step 1: amplitude given the texture.}
+For a fixed texture $\tau$, the clutter sample $c=\sqrt{\tau}\,q$ is complex
+Gaussian with power $\tau P$, where $P=\mathbb E|q|^2$ is the speckle power.
+Write $c=x+jy$ and $\sigma^2=\tau P$. For circular complex Gaussian
+$c\sim\mathcal{CN}(0,\sigma^2)$, the real and imaginary parts are independent
+with $x,y\sim\mathcal N(0,\sigma^2/2)$, so
+\[
+  f_{x,y}(x,y) = \frac{1}{\pi\sigma^2}\exp\!\left(-\frac{x^2+y^2}{\sigma^2}\right).
+\]
+Changing to polar coordinates $x=r\cos\phi$, $y=r\sin\phi$ (Jacobian $r$)
+gives $f_{r,\phi}(r,\phi)=\frac{r}{\pi\sigma^2}e^{-r^2/\sigma^2}$, which does
+not depend on $\phi$: the phase is uniform on $[0,2\pi)$. Integrating out
+$\phi$ multiplies by $2\pi$, so the amplitude $r=|c|$ is Rayleigh distributed,
+\begin{equation}
+  p(r\mid\tau) = \frac{2r}{\tau P}\exp\!\left(-\frac{r^2}{\tau P}\right),
+  \qquad r\ge 0 .
+  \label{eq:kd:rayleigh}
+\end{equation}
+
+\paragraph{Step 2: the texture distribution.}
+The texture is Gamma distributed with shape $\nu$ and scale $1/\nu$, so that
+$\mathbb E[\tau]=1$ and $\mathbb E|c|^2=P$:
+\begin{equation}
+  f(\tau) = \frac{\nu^{\nu}}{\Gamma(\nu)}\,\tau^{\nu-1}e^{-\nu\tau},
+  \qquad \tau>0 .
+  \label{eq:kd:gamma}
+\end{equation}
+
+\paragraph{Step 3: average over the texture.}
+By the law of total probability,
+\begin{align}
+  p(r) &= \int_0^\infty p(r\mid\tau)\,f(\tau)\,\mathrm d\tau \nonumber\\
+       &= \frac{2r\,\nu^{\nu}}{P\,\Gamma(\nu)}
+          \int_0^\infty \tau^{\nu-2}
+          \exp\!\left(-\frac{r^2}{P\tau}-\nu\tau\right)\mathrm d\tau .
+  \label{eq:kd:integral}
+\end{align}
+
+\paragraph{Step 4: evaluate the integral.}
+The integral has the standard form
+(Gradshteyn \& Ryzhik, 3.471.9)
+\begin{equation}
+  \int_0^\infty \tau^{s-1}\exp\!\left(-\frac{\alpha}{\tau}-\beta\tau\right)\mathrm d\tau
+  = 2\left(\frac{\alpha}{\beta}\right)^{s/2} K_s\!\left(2\sqrt{\alpha\beta}\right),
+  \label{eq:kd:identity}
+\end{equation}
+where $K_s(\cdot)$ is the modified Bessel function of the second kind of
+order $s$. Setting $s=\nu-1$, $\alpha=r^2/P$ and $\beta=\nu$ gives
+\begin{equation}
+  \int_0^\infty \tau^{\nu-2}
+  \exp\!\left(-\frac{r^2}{P\tau}-\nu\tau\right)\mathrm d\tau
+  = 2\left(\frac{r^2}{P\nu}\right)^{\frac{\nu-1}{2}}
+    K_{\nu-1}\!\left(2r\sqrt{\frac{\nu}{P}}\right).
+\end{equation}
+
+\paragraph{Step 5: collect terms.}
+Substituting into \eqref{eq:kd:integral} and grouping the powers of $r$,
+$\nu$ and $P$,
+\[
+  r\cdot r^{\nu-1}=r^{\nu},\qquad
+  \nu^{\nu}\cdot\nu^{-\frac{\nu-1}{2}}=\nu^{\frac{\nu+1}{2}},\qquad
+  P^{-1}\cdot P^{-\frac{\nu-1}{2}}=P^{-\frac{\nu+1}{2}},
+\]
+yields the K-distribution amplitude PDF
+\begin{equation}
+  \boxed{\;
+  p(r) = \frac{4\,\nu^{\frac{\nu+1}{2}}\,r^{\nu}}{\Gamma(\nu)\,P^{\frac{\nu+1}{2}}}\;
+         K_{\nu-1}\!\left(2r\sqrt{\frac{\nu}{P}}\right),
+         \qquad r\ge 0 . \;}
+  \label{eq:kd:pdf}
+\end{equation}
+
+\paragraph{Remarks.}
+\begin{itemize}
+  \item The PDF integrates to one and has $\mathbb E[r^2]=P$ (checked
+        numerically for $\nu=0.5$ and $\nu=20$).
+  \item Small $\nu$ gives a spike near $r=0$ and a long tail (spiky clutter).
+        As $\nu\to\infty$, the texture concentrates at $\tau=1$ and
+        \eqref{eq:kd:pdf} tends to the Rayleigh PDF
+        \eqref{eq:kd:rayleigh} with $\tau=1$, i.e.\ Gaussian clutter.
+  \item In intensity, $|c|^2=\tau|q|^2$ is the product of a
+        $\mathrm{Gamma}(\nu,1/\nu)$ texture and an exponential, i.e.\
+        $\mathrm{Gamma}(1,P)$, speckle intensity. This is why the
+        K-distribution is also described as a compound of two Gamma
+        distributions.
+  \item In MATLAB the PDF is
+        \texttt{4*nu\^{}((nu+1)/2)*r.\^{}nu./(gamma(nu)*P\^{}((nu+1)/2))
+        .*besselk(nu-1, 2*r*sqrt(nu/P))}.
+\end{itemize}
+
 \subsection{Radar Cross-Section and the Swerling Target Models}
+\label{rcs}
 
 \paragraph{Radar cross-section.}
 The radar cross-section (\gls{rcs}) $\sigma$ quantifies how strongly a target reflects energy back to the radar. It is defined as the area that, intercepting the incident power density and re-radiating it isotropically, would reproduce the echo actually observed, $$\sigma=\lim_{R\to\infty}4\pi R^2\frac{|E_s|^2}{|E_i|^2},$$ where $E_i$ and $E_s$ are the incident and back-scattered field magnitudes and $R$ is the range. It has units of area but is \emph{not} the target's physical size: it depends on the target's shape, material, orientation (aspect angle), the wavelength and the polarisation. Through the radar range equation the received target power is proportional to $\sigma$, so in the signal model the target amplitude obeys $|\alpha|^2\propto\sigma$ --- the \gls{rcs} sets the echo strength, while $\alpha$ additionally carries the (unknown) phase.
@@ -1072,6 +1177,7 @@ The two ways of handling the target amplitude in the optimum detector correspond
 
 \paragraph{\textcolor{red}{W5 - Short Summary.}}
 Traditional target detectors can perform poorly when clutter is non-Gaussian and heterogeneous, violating their underlying assumptions. The optimum detector for K-distributed clutter is known but assumes the clutter statistics (texture and speckle covariance) are separately available, which is not the case in practice. This thesis builds on existing texture-estimation methods to investigate whether a practical form of the optimum detector can be realised and to assess its performance against traditional detectors. The main challenge is that these statistics are not directly observable from data, so it must be established whether they can be estimated accurately enough for the detector to be practical.
+
 
 \newpage
 \bibliographystyle{IEEEtran}
