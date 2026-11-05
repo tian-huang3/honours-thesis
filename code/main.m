@@ -64,7 +64,7 @@ plot(r, pdf_K)
 
 xlabel('Amplitude $r = |\varsigma|$', 'Interpreter', 'latex')
 ylabel('$p(r)$', 'Interpreter', 'latex')
-title(sprintf('$\\nu = %.1f$', p.cModel.a), 'Interpreter', 'latex')
+title(sprintf('$a = %.1f$, b = %.1f', p.cModel.a, p.cModel.b), 'Interpreter', 'latex')
 legend('Simulated', 'K-distribution (theory)')
 
 % a = 20
@@ -88,7 +88,7 @@ plot(r, pdf_K)
 
 xlabel('Amplitude $r = |\varsigma|$', 'Interpreter', 'latex')
 ylabel('$p(r)$', 'Interpreter', 'latex')
-title(sprintf('$\\nu = %.1f$', p.cModel.a), 'Interpreter', 'latex')
+title(sprintf('$a = %.1f, b = %.1f$', p.cModel.a, p.cModel.b), 'Interpreter', 'latex')
 legend('Simulated', 'K-distribution (theory)')
 
 % explanation of plot:
@@ -195,66 +195,65 @@ title('MVDR Spectrum, True Covariance (angle-Hz axes)')
 % Run after the parameter block of main.m (needs p and NM in the workspace).
 % Gaussian training data (Ktype = 0), so the only error in R_hat is finite K.
 
-% p.cModel.Ktype = 0;
-% p.cModel.CNR = 20;
-% p.cModel.Dtype = 0;
-% 
-% Ks = [NM + 10, 2*NM, 10*NM];                % barely invertible, RMB rule, plenty
-% 
-% sin_theta = linspace(-1, 1, 201);
-% fd = linspace(-0.5, 0.5, 201);
-% 
-% % true covariance (G from the same call as the first training set)
-% [Z, ~, ~, G] = gen_clutter_data(p, Ks(1));
-% Pq = real(G(1, 1));
-% Pn = Pq * 10^(-p.cModel.CNR / 10);
-% R = G + Pn * eye(NM);
-% 
-% spectra = cell(1, 1 + length(Ks));
-% labels = cell(1, 1 + length(Ks));
-% spectra{1} = 10*log10(NM * mvdr_spectrum(R, p, asind(sin_theta), fd) / Pn);
-% labels{1} = 'True R = G + P_nI';
-% 
-% for k = 1:length(Ks)
-%     K = Ks(k);
-%     if k > 1
-%         Z = gen_clutter_data(p, K);         % fresh Gaussian training snapshots
-%     end
-%     R_hat = (Z * Z') / K;                   % sample covariance
-%     spectra{k + 1} = 10*log10(NM * mvdr_spectrum(R_hat, p, asind(sin_theta), fd) / Pn);
-%     labels{k + 1} = sprintf('SCM, K = %d', K);
-% end
-% 
-% % spectra side by side, same colour scale
-% clim_all = [min(cellfun(@(x) min(x(:)), spectra)), max(cellfun(@(x) max(x(:)), spectra))];
-% figure
-% for k = 1:length(spectra)
-%     subplot(2, 2, k)
-%     imagesc(sin_theta, fd, spectra{k}); axis xy
-%     clim(clim_all)                          % use caxis(clim_all) on MATLAB before R2022a
-%     xlabel('sin\theta'); ylabel('f_d (cycles/pulse)')
-%     ylabel(colorbar, 'dB relative to P_n')
-%     title(labels{k})
-% end
-% 
-% % cut through the spectrum at broadside (sin theta = 0), all on one axis
-% [~, c0] = min(abs(sin_theta));
-% figure; hold on
-% for k = 1:length(spectra)
-%     plot(fd, spectra{k}(:, c0), 'DisplayName', labels{k})
-% end
-% xlabel('f_d (cycles/pulse)'); ylabel('dB relative to P_n')
-% title('MVDR spectrum at broadside (sin\theta = 0)'); legend show; grid on
-% 
-% % noise floor: the median over the map (the ridge is a small fraction of it)
-% for k = 1:length(spectra)
-%     fprintf('%-20s floor = %6.2f dB\n', labels{k}, median(spectra{k}(:)));
-% end
+p.cModel.Ktype = 0;
+p.cModel.CNR = 20;
+
+Ks = [NM + 10, 2*NM, 10*NM];       % barely invertible, RMB rule, plenty
+
+sin_theta = linspace(-1, 1, 201);
+fd = linspace(-0.5, 0.5, 201);
+
+% true covariance (G from the same call as the first training set)
+[varsigma, ~, ~, G, R, Pn, Pq, beta] = gen_clutter_data(p, Ks(1));
+
+spectra = cell(1, 1 + length(Ks));
+labels = cell(1, 1 + length(Ks));
+spectra{1} = 10*log10(NM * mvdr_spectrum(R, p, asind(sin_theta), fd) / Pn);
+labels{1} = 'True R = G + P_nI';
+
+for k = 1:length(Ks)
+    K = Ks(k);
+    if k > 1
+        varsigma = gen_clutter_data(p, K);         % fresh Gaussian training snapshots
+    end
+    R_hat = (varsigma * varsigma') / K;            % sample covariance
+    spectra{k + 1} = 10*log10(NM * mvdr_spectrum(R_hat, p, asind(sin_theta), fd) / Pn);
+    labels{k + 1} = sprintf('SCM, K = %d', K);
+end
+
+% spectra side by side, same colour scale
+clim_all = [0 35];
+figure
+for k = 1:length(spectra)
+    subplot(2, 2, k)
+    imagesc(sin_theta, fd, spectra{k}); axis xy
+    clim(clim_all)                         
+    xlabel('sin\theta'); ylabel('f_d (cycles/pulse)')
+    ylabel(colorbar, 'dB relative to P_n')
+    title(labels{k})
+end
+
+% cut through the spectrum at broadside (sin theta = 0), all on one axis
+[~, c0] = min(abs(sin_theta));
+figure; hold on
+for k = 1:length(spectra)
+    plot(fd, spectra{k}(:, c0), 'DisplayName', labels{k})
+end
+xlabel('f_d (cycles/pulse)'); ylabel('dB relative to P_n')
+title('MVDR spectrum at broadside (sin\theta = 0)'); legend show; grid on
+
+% noise floor: the median over the map (the ridge is a small fraction of it)
+for k = 1:length(spectra)
+    fprintf('%-20s floor = %6.2f dB\n', labels{k}, median(spectra{k}(:)));
+end
 
 %% compare detector performance OKD vs AMF vs NAMF vs TEN (Pd vs SCR)
 % Pd vs SNR for AMF, NAMF and OKD in K-dist. clutter, at fixed Pfa
 
 rng(1);
+p.cModel.Ktype = 3;
+p.cModel.CNR = 20;
+p.cModel.a = 1; p.cModel.b = 1 / p.cModel.a;
 
 [varsigma, tau, c, G, R, Pn, Pq, beta] = gen_clutter_data(p, 1);
 
@@ -263,7 +262,7 @@ nv = (0:p.radar.N - 1).';       % antenna indices
 mv = (0:p.radar.M - 1).';       % pulse indices
 
 theta_t = 0;                    % hypothesised target at angle 0 deg (broadside)                                
-fd_t = 0.10;                    % hypothesised target Doppler
+fd_t = 0.04;                    % hypothesised target Doppler
 
 fs_t = (p.radar.d/p.radar.lambda) * sind(theta_t);      % target spatial frequency
 s_sp = exp(1i * 2 * pi * fs_t * nv);                    % N x 1, phase across antennas (spatial steering vec)
@@ -273,44 +272,49 @@ s = kron(s_temp, s_sp);                                 % NM x 1, space-time ste
 % H0 thresholds at the target Pfa (alpha = 0)
 Pfa = 0.01;
 Ntrials = 2000;
+Kt = 2 * NM;
 
-[y0_AMF, y0_NAMF, y0_OKD] = run_trials(p, Kt, s, 0, Ntrials, G, Pn);
+[y0_AMF, y0_NAMF, y0_CLV, y0_OKD] = run_trials(p, Kt, s, 0, Ntrials, G, Pn);
 
 gamma_AMF = quantile(y0_AMF, 1 - Pfa);
 gamma_NAMF = quantile(y0_NAMF, 1 - Pfa);
+gamma_CLV = quantile(y0_CLV, 1 - Pfa);
 gamma_OKD = quantile(y0_OKD, 1 - Pfa);
 
-fprintf("Pfa check: AMF %.3f NAMF %.3f OKD %.3f\n", mean(y0_AMF >= ...
-    gamma_AMF), mean(y0_NAMF >= gamma_NAMF), mean(y0_OKD >= gamma_OKD));
+fprintf("Pfa check: AMF %.3f NAMF %.3f CLV %.3f OKD %.3f\n", ...
+    mean(y0_AMF >= gamma_AMF), mean(y0_NAMF >= gamma_NAMF), ...
+    mean(y0_CLV >= gamma_CLV), mean(y0_OKD >= gamma_OKD));
 
 % Pd vs SNR
 SNR = -22:2:-1; % dB
 Pd_AMF = zeros(size(SNR)); 
 Pd_NAMF = zeros(size(SNR)); 
+Pd_CLV = zeros(size(SNR));
 Pd_OKD = zeros(size(SNR));
 
 for k = 1:length(SNR)
     alpha = sqrt(Pn * 10^(SNR(k)/10));
     
-    [y1_AMF, y1_NAMF, y1_OKD] = run_trials(p, Kt, s, alpha, Ntrials, G, Pn);
+    [y1_AMF, y1_NAMF, y1_CLV, y1_OKD] = run_trials(p, Kt, s, alpha, Ntrials, G, Pn);
 
     Pd_AMF(k) = mean(y1_AMF >= gamma_AMF);
     Pd_NAMF(k) = mean(y1_NAMF >= gamma_NAMF);
+    Pd_CLV(k) = mean(y1_CLV >= gamma_CLV);
     Pd_OKD(k) = mean(y1_OKD >= gamma_OKD);
 
-    fprintf("SNR %3d dB, P_d: AMF %.3f NAMF %.3f OKD %.3f\n", ...
-        SNR(k), Pd_AMF(k), Pd_NAMF(k), Pd_OKD(k));
+    fprintf("SNR %3d dB, P_d: AMF %.3f NAMF %.3f CLV %.3f OKD %.3f\n", ...
+        SNR(k), Pd_AMF(k), Pd_NAMF(k), Pd_CLV(k), Pd_OKD(k));
 end
 
 % plot
 figure('Color', 'w')
-plot(SNR, Pd_OKD, '-o', SNR, Pd_NAMF, '-s', SNR, Pd_AMF, '-^', ...
-    'LineWidth', 1.4);
+plot(SNR, Pd_CLV, '-d', SNR, Pd_OKD, '-o', SNR, Pd_NAMF, '-s', SNR, ...
+    Pd_AMF, '-^', 'LineWidth', 1.4);
 grid on;
 ylim([0, 1])
 xlabel('SNR (dB)')
 ylabel('P_d')
-legend('OKD', 'NAMF', 'AMF', 'Location', 'southeast');
+legend('CLV', 'OKD', 'NAMF', 'AMF', 'Location', 'southeast');
 title(sprintf("P_d vs SNR, K-distributed Clutter (a = %.1f, CNR = " + ...
     "%d dB), P_{fa} = 10^{-2} ", p.cModel.a, p.cModel.CNR));
 
