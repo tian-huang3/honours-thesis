@@ -12,6 +12,13 @@
 \makeatother
 \setbeamerfont{subsection in toc}{size=\footnotesize}
 
+\setbeamertemplate{bibliography item}{\insertbiblabel}
+\setbeamerfont{bibliography item}{size=\scriptsize}
+\setbeamerfont{bibliography entry author}{size=\scriptsize}
+\setbeamerfont{bibliography entry title}{size=\scriptsize}
+\setbeamerfont{bibliography entry location}{size=\scriptsize}
+\setbeamerfont{bibliography entry note}{size=\scriptsize}
+
 %% packages
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -69,8 +76,8 @@
                 \item \textbf{Applications:} maritime surveillance, search and rescue, border protection
                 \item The radar also receives unwanted reflected signals: 
                 \begin{itemize}
-                    \item \textbf{Clutter:} unwanted echoes from the environment, e.g. the sea surface
                     \item \textbf{Noise:} random thermal noise from the receiver electronics
+                    \item \textbf{Clutter:} unwanted echoes from the environment, e.g. the sea surface
                 \end{itemize}
             \end{itemize}
         \end{column}
@@ -90,34 +97,32 @@
 \begin{frame}{What Sea Clutter Looks Like}
     \small
     \begin{columns}[T]
-        \begin{column}{0.58\textwidth}
+        \begin{column}{0.6\textwidth}
             \textbf{Spiky (non-Gaussian)}
             \begin{itemize}
-                \item Echo = many small ripples riding on larger waves
-                \item \textbf{Breaking waves, whitecaps}: short, very bright \emph{sea spikes}
-                \item A spike can look just like a small boat
+                \item Echo = small ripples riding on larger waves
+                \item \textbf{Breaking waves}: bright \emph{sea spikes} that look like a boat
             \end{itemize}
-            \vspace{1mm}
             \textbf{Heterogeneous (changes across the scene)}
             \begin{itemize}
-                \item \textbf{Swell, wave groups}: echo power rises and falls cell to cell
-                \item \textbf{Wind, currents}: surface motion, and so Doppler, changes
-                \item Coastlines, ships, grazing angle add more variation
+                \item \textbf{Swell}: echo power rises and falls cell to cell
+                \item \textbf{Wind, currents}: surface motion (Doppler) changes
             \end{itemize}
         \end{column}
-        \begin{column}{0.4\textwidth}
+        \begin{column}{0.38\textwidth}
             \centering
-            % Replace each box with \includegraphics[width=\textwidth,height=2.2cm]{...} and a source line
-            \includegraphics[width=\textwidth, height=2.2cm]{figs/breaking_waves.jpg}\\[40pt] % CITE
-            \includegraphics[width=\textwidth, height=2.2cm]{figs/swell_group.jpg} % CITE
-            
+            \includegraphics[width=\textwidth, height=1.65cm]{figs/breaking_waves.jpg}\\[24pt] % CITE
+            \includegraphics[width=\textwidth, height=1.65cm]{figs/swell_group.jpg} % CITE
         \end{column}
     \end{columns}
+    \begin{block}{So we model sea clutter as K-distributed}
+        Gaussian and homogeneous (same statistics in every cell) is simple, but rules out both spikes and power changes. The \textbf{K-distribution} keeps Gaussian ripples but gives each cell its own power, set by the waves.
+    \end{block}
 \end{frame}
 
 %% 1.3 The Challenge: Real Clutter vs the Gaussian Assumption
-\subsection{The Challenge}
-\begin{frame}{The Challenge: Real Clutter vs the Gaussian Assumption}
+\subsection{K-distributed Clutter vs the Gaussian Assumption}
+\begin{frame}{K-distributed Clutter vs the Gaussian Assumption}
     \small
     \begin{columns}[c]
         \begin{column}{0.52\textwidth}
@@ -139,104 +144,100 @@
         How do we detect a weak target in strong, spiky, changing sea clutter, without the number of false alarms depending on how rough the sea is?
     \end{block}
 \end{frame}
-
 %% ----- Section 2: Detection Theory ----- %%
 \section{Detection Theory}
 
-%% 2.1 Radar Signal Model 
+%% 2.1 Radar Signal Model
 \subsection{Radar Signal Model}
 \begin{frame}{Radar Signal Model}
     \small
     \begin{columns}[c]
-        \begin{column}{0.28\textwidth}
+        \begin{column}{0.22\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{airborne_radar_signal_model.png} % CITE Elias
+            \includegraphics[height=3.1cm]{airborne_radar_signal_model.png}
         \end{column}
-        \begin{column}{0.7\textwidth}
+        \begin{column}{0.76\textwidth}
             \begin{itemize}
-                \item Side-looking linear array of $N$ antennas, element spacing $d$, flying at speed $v_p$
-                \item \textbf{Transmit:} all elements act as one antenna, sending one beam
-                \item \textbf{Receive:} each element has its own receiver: $N$ channels
-                \item This repeats for $M$ pulses, one every $T_r = 1/f_\text{PRF}$
-                \item Echo sampled in \textbf{fast time}: delay $t$ $\rightarrow$ range $R = ct/2$, one \textbf{range gate} per sample
-            \end{itemize}
-            \vspace{1mm}
-            \begin{block}{For every range gate}
-                an $N\times M$ grid (antenna $\times$ pulse), stacked into $\mathbf{x}\in\mathbb{C}^{L}$, $L = NM$; all gates form the $N \times M \times N_r$ data cube
-            \end{block}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-%% MISSING RECEIVED VECTOR
-
-%% 2.2 Hypothesis Testing
-\subsection{Hypothesis Testing}
-\begin{frame}{Hypothesis Testing}
-    \small
-    \begin{columns}[c]
-        \begin{column}{0.5\textwidth}
-            For each cell under test, decide between
-            \[ H_0:\ \mathbf{x} = \mathbf{c} + \mathbf{n} \qquad
-               H_1:\ \mathbf{x} = \alpha\,\mathbf{s} + \mathbf{c} + \mathbf{n} \]
-            \begin{itemize}
-                \item Compute a statistic $y$ and compare it with a threshold: $y \gtrless \gamma$
-                \item False alarm: $P_{fa} = P(y > \gamma \mid H_0)$
-                \item Detection: $P_d = P(y > \gamma \mid H_1)$
-                \item Set $\gamma$ for a fixed $P_{fa}$, then make $P_d$ as large as possible
-                \item \textbf{CFAR}: $P_{fa}$ stays fixed even when the clutter power changes => expolain why this is needed
+                \item Side-looking array: $N$ elements, spacing $d$, speed $v_p$
+                \item Transmit one beam; receive on $N$ channels, over $M$ pulses ($T_r = 1/f_\text{PRF}$)
+                \item Fast-time sample $\rightarrow$ range gate, $R = ct/2$
+                \item Each gate: $N\times M$ samples stacked into $\mathbf{x}\in\mathbb{C}^{L}$, $L = NM$
             \end{itemize}
         \end{column}
-        \begin{column}{0.48\textwidth}
-            \centering
-            \begin{tikzpicture}[x=0.47cm, y=2.4cm, font=\scriptsize]
-                \def\thr{4.2}
-                % H1 tail (detection) and H0 tail (false alarm)
-                \fill[blue!25, domain=\thr:10, samples=40, variable=\t]
-                    (\thr,0) -- plot (\t, {exp(-(\t-5.5)^2/2)}) -- (10,0) -- cycle;
-                \fill[red!50, domain=\thr:10, samples=40, variable=\t]
-                    (\thr,0) -- plot (\t, {exp(-(\t-1.5)^2/2)}) -- (10,0) -- cycle;
-                \draw[thick, black!70, domain=-1.5:10, samples=80] plot (\x, {exp(-(\x-1.5)^2/2)});
-                \draw[thick, blue!70!black, domain=-1.5:10, samples=80] plot (\x, {exp(-(\x-5.5)^2/2)});
-                \draw[->] (-1.5,0) -- (10.3,0) node[below left] {$y$};
-                \draw[dashed] (\thr,0) -- (\thr,1.15) node[above] {threshold $\gamma$};
-                \node at (1.5,1.1) {$H_0$};
-                \node[blue!70!black] at (5.5,1.1) {$H_1$};
-                \node[red!70!black] at (5.6,-0.15) {$P_{fa}$};
-                \node[blue!70!black] at (7.4,0.4) {$P_d$};
-            \end{tikzpicture}
-        \end{column}
     \end{columns}
+    \begin{block}{Received vector in one range gate}
+        \[ \mathbf{x} = \underbrace{\alpha\,\mathbf{s}}_{\text{target}} + \underbrace{\mathbf{c}}_{\text{clutter}} + \underbrace{\mathbf{n}}_{\text{noise}},
+           \qquad \mathbf{s}(f_s,f_d) = \mathbf{s}_\text{temp}(f_d)\otimes\mathbf{s}_\text{sp}(f_s) \]
+        \vspace{-3mm}
+        \footnotesize
+        \begin{itemize}
+            \item Across elements, phase $\rightarrow$ \textbf{angle}: $f_s = d\sin\theta/\lambda$
+            \item Across pulses, phase $\rightarrow$ \textbf{velocity}: $f_d = 2vT_r/\lambda$
+            \item Clutter from angle $\theta$ has Doppler set by $v_p$: it lies on a \textbf{ridge} $f_d = \beta f_s$
+        \end{itemize}
+    \end{block}
 \end{frame}
 
-%% 2.3 K-distributed Clutter
-\subsection{K-distributed Clutter}
-\begin{frame}{Why They Fail: K-distributed Clutter}
+%% 2.2 Sea Clutter Model
+\subsection{Sea Clutter Model}
+\begin{frame}{Modelling Clutter and Noise}
     \small
-    Compound-Gaussian model \cite{Gini1998}: $\;\mathbf{c} = \sqrt{\tau}\,\mathbf{q}$
+    \textbf{Clutter}:$\;\mathbf{c} = \sqrt{\tau}\,\mathbf{q}$ (Compound-Gaussian model \cite{Gini1998})
     \vspace{1mm}
     \begin{columns}[T]
         \begin{column}{0.5\textwidth}
             \begin{itemize}
-                \item \textbf{Speckle} $\mathbf{q}\sim\mathcal{CN}(\mathbf{0},\mathbf{G})$ = \emph{small ripples}: Gaussian, carries the ridge
-                \item \textbf{Texture} $\tau\sim\Gamma(a, 1/a)$ = \emph{large waves}: local power, new value per gate
-                \item Small $a$: very spiky; $a\to\infty$: Gaussian
+                \item \textbf{Speckle} $\mathbf{q}\sim\mathcal{CN}(\mathbf{0},\mathbf{G})$ = \emph{small ripples}: Gaussian; $\mathbf{G}$: correlation across elements and pulses
+                \item \textbf{Texture} $\tau\sim\Gamma(a, b)$ = \emph{large waves}: local power, new value per gate; small $a$ = spiky, $a\to\infty$ = Gaussian
             \end{itemize}
         \end{column}
         \begin{column}{0.48\textwidth}
-            \textbf{Effect on Gaussian detectors}
+            \textbf{Back to the sea}
             \begin{itemize}
-                \item Each gate has its own covariance $\mathbf{R}_k = \tau_k\mathbf{G} + \sigma^2\mathbf{I}$
-                \item SCM averages \textbf{different} $\tau_k$: not the CUT's $\mathbf{R}$
-                \item Random power $\Rightarrow$ \textbf{heavy tail}: spikes cross a Gaussian threshold, $P_{fa}$ rises
+                \item \textbf{Spiky}: random $\tau$ $\Rightarrow$ heavy-tailed amplitude
+                \item \textbf{Heterogeneous}: $\tau_k$ differs gate to gate, so each gate has its own $\mathbf{R}_k = \tau_k\mathbf{G} + \sigma^2\mathbf{I}$
             \end{itemize}
         \end{column}
     \end{columns}
-    \vspace{1mm}
+    \vspace{4mm}
+    \textbf{Noise:} $\mathbf{n}\sim\mathcal{CN}(\mathbf{0},\sigma^2\mathbf{I})$: white Gaussian receiver noise
     \begin{block}{Received vector in the CUT}
-        \[ \mathbf{x} = \alpha\,\mathbf{s} + \sqrt{\tau}\,\mathbf{q} + \mathbf{n}, \qquad
-           \mathbf{x}\mid\tau \sim \mathcal{CN}\big(\alpha\,\mathbf{s},\, \tau\mathbf{G} + \sigma^2\mathbf{I}\big) \]
-        Gaussian \emph{given} $\tau$, heavy-tailed overall; $\tau$, $\mathbf{G}$ \textbf{unknown}.
+        \[ \mathbf{x}\mid\tau \sim \mathcal{CN}\big(\alpha\,\mathbf{s},\, \mathbf{R}\big), \qquad
+           \mathbf{R} = \tau\mathbf{G} + \sigma^2\mathbf{I}\ \text{(clutter + noise covariance)} \]
+        Gaussian \emph{given} $\tau$, heavy-tailed overall; $\tau$ and $\mathbf{G}$, so $\mathbf{R}$, are \textbf{unknown}.
+    \end{block}
+\end{frame}
+
+%% 2.3 Hypothesis Testing and CFAR
+\subsection{Hypothesis Testing}
+\begin{frame}{Hypothesis Testing and CFAR}
+    \small
+    For each cell under test, decide between
+    \[ H_0:\ \mathbf{x} = \mathbf{c} + \mathbf{n} \qquad\text{vs}\qquad
+       H_1:\ \mathbf{x} = \alpha\,\mathbf{s} + \mathbf{c} + \mathbf{n} \]
+    \vspace{-3mm}
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \textbf{Test statistic}: one number $y = T(\mathbf{x})$ that measures how target-like the cell is
+            \begin{itemize}
+                \item e.g.\ $y = |\mathbf{s}^H\mathbf{x}|^2$: energy along the target's signature
+                \item Decide $H_1$ if $y > \gamma$
+                \item False alarm $P_{fa} = P(y > \gamma \mid H_0)$
+                \item Detection $P_d = P(y > \gamma \mid H_1)$
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \textbf{Neyman--Pearson}\cite{Neyman1933}: for a fixed $P_{fa}$, the highest $P_d$ comes from the \textbf{likelihood ratio}
+            \[ \Lambda(\mathbf{x}) = \frac{p(\mathbf{x}\mid H_1)}{p(\mathbf{x}\mid H_0)} \;\underset{H_0}{\overset{H_1}{\gtrless}}\; \gamma \]
+            \vspace{-2mm}
+            \begin{itemize}
+                \item $\gamma$ set so that $P(\Lambda > \gamma\mid H_0) = P_{fa}$
+                \item Unknowns ($\alpha$, $\mathbf{R}$): replace by ML estimates, the \textbf{GLRT}
+            \end{itemize}
+        \end{column}
+    \end{columns}
+    \begin{block}{CFAR: constant false alarm rate}
+        $\gamma$ is set once, but $\tau$ changes the clutter power cell to cell. CFAR: $y$ under $H_0$ does not depend on that power, so one $\gamma$ gives the same $P_{fa}$ everywhere.
     \end{block}
 \end{frame}
 
@@ -247,66 +248,27 @@
 \subsection{Gaussian Adaptive Detectors}
 \begin{frame}{Gaussian Adaptive Detectors}
     \small
-    \centering
-    \begin{tikzpicture}[gate/.style={draw, minimum width=6mm, minimum height=4mm, font=\tiny},
-                        tr/.style={gate, fill=blue!15}, gd/.style={gate, fill=gray!25}, cut/.style={gate, fill=orange!60}]
-        \foreach \i in {0,...,3} \node[tr] at (\i*0.65, 0) {};
-        \node[gd] at (2.6, 0) {G};
-        \node[cut] at (3.25, 0) {CUT};
-        \node[gd] at (3.9, 0) {G};
-        \foreach \i in {0,...,3} \node[tr] at (4.55+\i*0.65, 0) {};
-        \node[font=\scriptsize] at (1.0, -0.5) {training $\mathbf{z}_1,\dots$};
-        \node[font=\scriptsize] at (3.25, -0.5) {test $\mathbf{x}$};
-        \node[font=\scriptsize] at (5.6, -0.5) {$\dots,\mathbf{z}_K$};
+    \textbf{Idea:} apply Neyman--Pearson assuming Gaussian clutter, then fill in what we do not know
+    \begin{center}
+    \begin{tikzpicture}[box/.style={draw, rounded corners, fill=blue!10, align=center, font=\scriptsize, minimum height=1.1cm, text width=3.1cm, inner sep=2pt},
+                        >=stealth, thick]
+        \node[box] (a) at (0,0)   {\textbf{1. Assume Gaussian}\\ $\mathbf{x}\sim\mathcal{CN}(\mathbf{0},\mathbf{R})$ or $\mathcal{CN}(\alpha\mathbf{s},\mathbf{R})$};
+        \node[box] (b) at (3.75,0) {\textbf{2. GLRT with $\mathbf{R}$ known}\\ $\dfrac{|\mathbf{s}^H\mathbf{R}^{-1}\mathbf{x}|^2}{\mathbf{s}^H\mathbf{R}^{-1}\mathbf{s}}$};
+        \node[box, fill=orange!25] (c) at (7.5,0) {\textbf{3. $\mathbf{R}$ unknown}\\ estimate it from neighbouring cells (SCM)};
+        \draw[->] (a) -- (b); \draw[->] (b) -- (c);
     \end{tikzpicture}
-    \raggedright
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \textbf{1. Gaussian, $\mathbf{R}$ known}: \emph{whiten, then match} is \textbf{optimal} (Neyman--Pearson)
-            \[ \mathbf{w} \propto \mathbf{R}^{-1}\mathbf{s} \quad (\mathbf{R}^{-1}\text{ nulls the clutter}) \]
-
-            \textbf{2. $\mathbf{R}$ unknown}: SCM from $K$ neighbours, the \textbf{ML estimate} if they are i.i.d.\ Gaussian and homogeneous
-            \[ \hat{\mathbf{R}} = \frac{1}{K}\sum_{k=1}^{K}\mathbf{z}_k\mathbf{z}_k^H \]
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \textbf{3. Plug in the MLE}: adaptive matched filter
-            \[ y_\text{AMF} = \frac{|\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{x}|^2}{\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{s}} \;\gtrless\; \eta \]
-            \vspace{-2mm}
-            \par\footnotesize
-            \textbf{NAMF}: also normalises by the CUT's own power\par
-            \textbf{Kelly's GLRT}: CUT and training together\par\smallskip
-            All are CFAR in Gaussian, homogeneous clutter\par
-        \end{column}
-    \end{columns}
+    \end{center}
+    \[ y_\text{AMF} = \frac{|\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{x}|^2}{\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{s}} \;\gtrless\; \gamma,
+       \qquad \hat{\mathbf{R}} = \frac{1}{K}\sum_{k=1}^{K}\mathbf{z}_k\mathbf{z}_k^H \]
+    \vspace{-2mm}
+    \begin{itemize}
+        \item Reads as: how well $\mathbf{x}$ matches the target $\mathbf{s}$, with clutter-heavy directions weighted down
+        \item SCM is the ML estimate \emph{if} the neighbours are Gaussian and alike
+        \item NAMF, Kelly: normalised differently; all CFAR in Gaussian clutter
+    \end{itemize}
     \begin{alertblock}{In practice}
-        Derive for Gaussian clutter, apply to sea clutter, keep whichever works best
+        Derived for Gaussian clutter, applied at sea anyway. In K clutter they lose detection performance and CFAR \cite{Gini1998}.
     \end{alertblock}
-\end{frame}
-
-%% 3.2 Gaussian Detectors in K-distributed Clutter
-\subsection{Gaussian Detectors in K-distributed Clutter}
-\begin{frame}{Gaussian Detectors in K-distributed Clutter}
-    \small
-    \begin{columns}[c]
-        \begin{column}{0.55\textwidth}
-            \centering
-            % Replace with your MATLAB figure from run_trials.m, e.g.
-            % \includegraphics[width=\textwidth]{pd_amf_namf.png}
-            \fbox{\parbox[c][4.2cm][c]{0.95\textwidth}{\centering\scriptsize \textbf{Your MATLAB figure}\\ $P_d$ vs SNR at $P_{fa}=10^{-3}$:\\ AMF, NAMF, clairvoyant\\ (Gaussian vs K clutter, $a = $ ??)}}\\[2pt]
-            {\scriptsize Monte Carlo, $K = 2L$ training cells, ?? trials}
-        \end{column}
-        \begin{column}{0.43\textwidth}
-            \textbf{Simulated K clutter} ($N=8$, $M=16$)
-            \begin{itemize}
-                \item Threshold set for $P_{fa} = 10^{-3}$ in Gaussian clutter gives $P_{fa} \approx$ \alert{??} in K clutter
-                \item AMF and NAMF lose \alert{??} dB against the clairvoyant detector at $P_d = 0.5$
-                \item The spikier the clutter (smaller $a$), the bigger the loss
-            \end{itemize}
-            \begin{alertblock}{Takeaway}
-                Gaussian detectors lose false-alarm control and sensitivity at sea
-            \end{alertblock}
-        \end{column}
-    \end{columns}
 \end{frame}
 
 %% 3.3 The Optimum K-distributed Detector (OKD)
@@ -601,12 +563,197 @@
 
 \appendix
 %% ----- References ------ %%
-\begin{frame}{References}
+\begin{frame}[allowframebreaks]{References}
     \printbibliography[heading=none]
 \end{frame}
 
 %% ----- Backup Slides ----- %%
-\begin{frame}{Backup: ...}  
+%% ----- B1: Estimating the shape parameter ------ %%
+\begin{frame}{Backup: Estimating the Shape Parameter $a$}
+    \small
+    From clutter-only gates, use the intensity $z = |x|^2$ of each sample
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \textbf{Method of moments}
+            \[ m = \frac{\langle z^2\rangle}{\langle z\rangle^2} = 2\Big(1+\frac{1}{a}\Big)
+               \;\Rightarrow\; \hat a = \frac{2}{m-2} \]
+            Gaussian clutter: $m = 2$, so $\hat a \to \infty$
+            \vspace{1mm}
+
+            \textbf{Better estimators}
+            \begin{itemize}
+                \item $\langle z\log z\rangle$ estimator: lower variance
+                \item Maximum likelihood: best, but numerical
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.47\textwidth}
+            \textbf{Catches}
+            \begin{itemize}
+                \item Noise makes clutter look more Gaussian: $\hat a$ biased \textbf{up}
+                \item Samples in one gate share $\tau$: independent samples $\approx$ number of \textbf{gates}, not $NM\times$ gates
+                \item $a$ itself varies across the scene
+            \end{itemize}
+            \vspace{1mm}
+            \textbf{Typical values}: $a<1$ very spiky, $a\gtrsim 20$ close to Gaussian
+        \end{column}
+    \end{columns}
+    \vspace{1mm}
+    \begin{block}{Sub-goal 3}
+        How much does the OKD lose when it uses $\hat a$ instead of the true $a$?
+    \end{block}
+\end{frame}
+
+%% ----- B2: Covariance estimators for K clutter ------ %%
+\begin{frame}{Backup: An ML Covariance Estimate for K Clutter?}
+    \small
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \textbf{$\tau_k$ as unknown constants}: ML gives the \textbf{fixed-point (Tyler)} estimator \cite{Gini2002}:
+            \[ \hat{\mathbf{G}} = \frac{L}{K}\sum_{k=1}^{K}\frac{\mathbf{z}_k\mathbf{z}_k^H}{\mathbf{z}_k^H\hat{\mathbf{G}}^{-1}\mathbf{z}_k} \]
+            \begin{itemize}
+                \item Each gate divided by its own power: $\tau_k$ cancels
+                \item Same answer whatever the texture pdf
+                \item Iterate from $\hat{\mathbf{G}}_0 = \mathbf{I}$; one step = NSCM
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.47\textwidth}
+            \textbf{Treat $\tau_k$ as random (gamma)}
+            \begin{itemize}
+                \item Likelihood needs $\int$ over every $\tau_k$: no closed-form ML
+                \item Needs $a$ as well
+            \end{itemize}
+            \vspace{1mm}
+            \textbf{Why the thesis starts with the SCM}
+            \begin{itemize}
+                \item It is what current detectors use
+                \item Thermal noise breaks the FP's scale invariance ($\tau_k\mathbf{G} + \sigma^2\mathbf{I}$)
+                \item FP is a natural next step after sub-goal 2
+            \end{itemize}
+        \end{column}
+    \end{columns}
+    \vspace{1mm}
+    \textbf{Scale:} only $\tau\mathbf{G}$ is identifiable, so fix $\mathbb{E}[\tau] = 1$ or $\mathrm{tr}(\mathbf{G}) = L$
+\end{frame}
+
+%% ----- B3: NAMF, Kelly and the RMB rule ------ %%
+\providecommand{\bnote}[1]{\parbox[c]{0.3\textwidth}{\raggedright\footnotesize #1}}
+\begin{frame}{Backup: NAMF, Kelly's GLRT and the RMB Rule}
+    \small
+    \begin{center}
+    \begin{tabular}{@{}l c l@{}}
+        \toprule
+        AMF & $\dfrac{|\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{x}|^2}{\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{s}}$ & \bnote{Two-step GLRT: SCM plugged into the matched filter} \\ \addlinespace[3mm]
+        NAMF & $\dfrac{|\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{x}|^2}{(\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{s})(\mathbf{x}^H\hat{\mathbf{R}}^{-1}\mathbf{x})}$ & \bnote{Scale-invariant in $\mathbf{x}$: CFAR to the CUT's own power} \\ \addlinespace[3mm]
+        Kelly & $\dfrac{|\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{x}|^2}{(\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{s})(K + \mathbf{x}^H\hat{\mathbf{R}}^{-1}\mathbf{x})}$ & \bnote{One-step GLRT: CUT and training together} \\
+        \bottomrule
+    \end{tabular}
+    \end{center}
+    \vspace{1mm}
+    \begin{block}{How much training data? \cite{Reed1974}}
+        SINR loss of the SCM filter $\rho \sim \mathrm{Beta}(K-L+2,\,L-1)$, so $\mathbb{E}[\rho] = \frac{K-L+2}{K+1}$.
+        Average loss of 3 dB needs $K \approx 2L$. With $N=8$, $M=16$: $L = 128$, so about 256 alike gates.
+    \end{block}
+\end{frame}
+
+%% ----- B4: OKD in detail ------ %%
+\begin{frame}{Backup: The OKD in Detail \cite{Gini1998}}
+    \small
+    \textbf{Quadratic forms} (unknown $\alpha$ replaced by its ML estimate, GLRT):
+    \[ q_0 = \mathbf{x}^H\mathbf{G}^{-1}\mathbf{x}, \qquad
+       q_1 = q_0 - \frac{|\mathbf{s}^H\mathbf{G}^{-1}\mathbf{x}|^2}{\mathbf{s}^H\mathbf{G}^{-1}\mathbf{s}} \]
+    $q_1$ = whitened power left once the best target along $\mathbf{s}$ is removed.
+    \vspace{1mm}
+
+    \textbf{Gamma texture, no noise}: $f_\tau(\tau) = \frac{a^a}{\Gamma(a)}\tau^{a-1}e^{-a\tau}$ gives
+    \[ h(q) = \int_0^\infty \tau^{-L} e^{-q/\tau} f_\tau(\tau)\,d\tau
+       \;\propto\; q^{\frac{a-L}{2}}\, K_{L-a}\big(2\sqrt{a q}\big) \]
+    \vspace{-2mm}
+    \begin{itemize}
+        \item $K_\nu$: modified Bessel function, hence ``K-distribution''
+        \item With noise, $\mathbf{R} = \tau\mathbf{G} + \sigma^2\mathbf{I}$ has no closed form: rotate to $\mathbf{G}$'s eigenbasis and integrate over $\tau$ numerically
+        \item Random (Swerling I) amplitude instead of GLRT: extra term in the $q_1$ denominator; same at high SCR
+    \end{itemize}
+\end{frame}
+
+%% ----- B5: TEN in detail ------ %%
+\begin{frame}{Backup: Texture Estimation and Normalisation (TEN) \cite{Aboutanios2020}}
+    \small
+    \begin{enumerate}
+        \item SDS estimate from sub-windows of each gate: $\hat{\mathbf{Q}}$ (CUT) and $\hat{\mathbf{R}}_k$ (gate $k$)
+        \item Texture ratio of gate $k$ to the CUT:
+        \[ \zeta_k = \tfrac{1}{L}\,\mathrm{tr}\big(\hat{\mathbf{Q}}^{-1}\hat{\mathbf{R}}_k\big) \approx \tau_k/\tau_T \]
+        \item Rescale to the CUT's power, $\tilde{\mathbf{R}}_k = \hat{\mathbf{R}}_k/\zeta_k \approx \tau_T\mathbf{G}$, and pool:
+        \[ \hat{\boldsymbol{\Sigma}}_\text{TEN} = \frac{(K-1)\hat{\mathbf{Q}} + \sum_k \tilde{\mathbf{R}}_k}{2K-1} \]
+        \item Use $\hat{\boldsymbol{\Sigma}}_\text{TEN}$ in an AMF-type statistic
+    \end{enumerate}
+    \vspace{1mm}
+    \begin{block}{What TEN gives, and what it does not}
+        Texture \textbf{ratios} and $\tau_T\mathbf{G}$; never $\tau$ and $\mathbf{G}$ separately. Feeding these into the OKD is the stretch goal.
+    \end{block}
+\end{frame}
+
+%% ----- B6: SCM details ------ %%
+\begin{frame}{Backup: Why the SCM, and Why Leave Out the CUT?}
+    \small
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \textbf{SCM is ML for i.i.d.\ Gaussian training}
+            \[ \log p = -K\big(\log|\mathbf{R}| + \mathrm{tr}(\mathbf{R}^{-1}\hat{\mathbf{R}})\big) + \text{const} \]
+            maximised at $\mathbf{R} = \hat{\mathbf{R}} = \frac{1}{K}\sum_k\mathbf{z}_k\mathbf{z}_k^H$
+            \vspace{1mm}
+            \begin{itemize}
+                \item Unbiased: $\mathbb{E}[\hat{\mathbf{R}}] = \mathbf{R}$
+                \item But $\mathbb{E}[\hat{\mathbf{R}}^{-1}] = \tfrac{K}{K-L}\mathbf{R}^{-1}$ (inverse Wishart)
+                \item Needs $K \ge L$ to be invertible
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.47\textwidth}
+            \textbf{Why not use the CUT?}
+            \begin{itemize}
+                \item A target in the training is treated as interference and \textbf{nulled}: self-cancellation
+                \item \textbf{Guard cells} stop target energy that spreads into neighbouring gates
+            \end{itemize}
+            \vspace{1mm}
+            \textbf{In K clutter}
+            \begin{itemize}
+                \item $\mathbb{E}[\hat{\mathbf{R}}] = \bar\tau\mathbf{G} + \sigma^2\mathbf{I}$: the \emph{average} power, not the CUT's $\tau_T$
+                \item One spiky gate can dominate the sum
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+%% ----- B7: MVDR and the floor drop ------ %%
+\begin{frame}{Backup: MVDR Spectrum and the $(K-L)/K$ Floor}
+    \small
+    \begin{columns}[T]
+        \begin{column}{0.5\textwidth}
+            \textbf{MVDR (Capon) spectrum}
+            \[ P(f_s,f_d) = \frac{1}{\mathbf{s}^H\mathbf{R}^{-1}\mathbf{s}} \]
+            \begin{itemize}
+                \item Minimum output power with unit gain on $\mathbf{s}$
+                \item Much sharper than the Fourier spectrum $\mathbf{s}^H\mathbf{R}\mathbf{s}$: shows the thin ridge
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.47\textwidth}
+            \textbf{With the SCM}
+            \[ \mathbb{E}\big[\mathbf{s}^H\hat{\mathbf{R}}^{-1}\mathbf{s}\big] = \frac{K}{K-L}\,\mathbf{s}^H\mathbf{R}^{-1}\mathbf{s} \]
+            so the spectrum drops by about $\frac{K-L}{K}$
+            \vspace{1mm}
+            \begin{center}
+            \footnotesize
+            \begin{tabular}{lr}
+                \toprule
+                $K$ ($L = 128$) & $10\log_{10}\frac{K-L}{K}$ \\
+                \midrule
+                $L+10$ & $-11.4$ dB \\
+                $2L$ & $-3.0$ dB \\
+                $10L$ & $-0.5$ dB \\
+                \bottomrule
+            \end{tabular}
+            \end{center}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 
