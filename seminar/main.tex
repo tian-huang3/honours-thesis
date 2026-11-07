@@ -27,6 +27,7 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows.meta,calc}
 \usepackage{textcomp}
+\usepackage{appendixnumberbeamer}
 
 \usepackage[style=ieee,backend=biber]{biblatex}
 \addbibresource{references.bib}
@@ -254,7 +255,7 @@
                         >=stealth, thick]
         \node[box] (a) at (0,0)   {\textbf{1. Assume Gaussian}\\ $\mathbf{x}\sim\mathcal{CN}(\mathbf{0},\mathbf{R})$ or $\mathcal{CN}(\alpha\mathbf{s},\mathbf{R})$};
         \node[box] (b) at (3.75,0) {\textbf{2. GLRT with $\mathbf{R}$ known}\\ $\dfrac{|\mathbf{s}^H\mathbf{R}^{-1}\mathbf{x}|^2}{\mathbf{s}^H\mathbf{R}^{-1}\mathbf{s}}$};
-        \node[box, fill=orange!25] (c) at (7.5,0) {\textbf{3. $\mathbf{R}$ unknown}\\ estimate it from neighbouring cells (SCM)};
+        \node[box, fill=orange!25] (c) at (7.5,0) {\textbf{3. $\mathbf{R}$ unknown}\\ estimate it from \textbf{training data} (SCM)};
         \draw[->] (a) -- (b); \draw[->] (b) -- (c);
     \end{tikzpicture}
     \end{center}
@@ -262,12 +263,14 @@
        \qquad \hat{\mathbf{R}} = \frac{1}{K}\sum_{k=1}^{K}\mathbf{z}_k\mathbf{z}_k^H \]
     \vspace{-2mm}
     \begin{itemize}
-        \item Reads as: how well $\mathbf{x}$ matches the target $\mathbf{s}$, with clutter-heavy directions weighted down
-        \item SCM is the ML estimate \emph{if} the neighbours are Gaussian and alike
-        \item NAMF, Kelly: normalised differently; all CFAR in Gaussian clutter
+        \item How well $\mathbf{x}$ matches $\mathbf{s}$, with clutter-heavy directions weighted down
+        \item Needs \textbf{homogeneous} training data: $K \geq 2L$ clutter-only cells with the \textbf{same} $\mathbf{R}$ as the CUT
+        % \item Reads as: how well $\mathbf{x}$ matches the target $\mathbf{s}$, with clutter-heavy directions weighted down
+        % \item SCM is the ML estimate \emph{if} the neighbours are Gaussian and alike
+        \item NAMF, GLRT are similar but normalised differently; all CFAR in Gaussian clutter
     \end{itemize}
     \begin{alertblock}{In practice}
-        Derived for Gaussian clutter, applied at sea anyway. In K clutter they lose detection performance and CFAR \cite{Gini1998}.
+        Derived for Gaussian, homogeneous clutter, applied at sea anyway. In K clutter, the texture breaks both, and they lose detection performance and CFAR \cite{Gini1998}.
     \end{alertblock}
 \end{frame}
 
@@ -305,88 +308,66 @@
 \begin{frame}{Practical Approaches in Heterogeneous Clutter}
     \small
     \begin{columns}[T]
-        \begin{column}{0.32\textwidth}
-            \begin{block}{Single data set (SDS)}
-                Estimate $\mathbf{R}$ from sub-windows of the \textbf{CUT itself} \cite{Aboutanios2020} % EDIT
-                \begin{itemize}
-                    \item[+] No training data needed
-                    \item[$-$] Few samples, small window
-                \end{itemize}
-            \end{block}
+        \begin{column}{0.64\textwidth}
+            \centering\textbf{Patch the Gaussian detector}\par\vspace{1mm}
+            \begin{columns}[T]
+                \begin{column}{0.49\textwidth}
+                    \begin{block}{Single data set (SDS)}
+                        Estimate $\mathbf{R}$ from sub-windows of the \textbf{CUT itself} \cite{Aboutanios2020} % EDIT
+                        \begin{itemize}
+                            \item[+] No training data needed
+                            \item[$-$] Few samples, small window
+                        \end{itemize}
+                    \end{block}
+                \end{column}
+                \begin{column}{0.49\textwidth}
+                    \begin{block}{Hybrid}
+                        Combine CUT and training estimates; screen out unlike gates \cite{Aboutanios2020} % EDIT
+                        \begin{itemize}
+                            \item[+] More samples
+                            \item[$-$] Texture changes the power, so many gates get \textbf{rejected}
+                        \end{itemize}
+                    \end{block}
+                \end{column}
+            \end{columns}
         \end{column}
         \begin{column}{0.32\textwidth}
-            \begin{block}{Hybrid}
-                Combine CUT and training estimates; screen out unlike gates (GIP) \cite{Aboutanios2020} % EDIT
+            \centering\textbf{Use the K model}\par\vspace{1mm}
+            \begin{exampleblock}{TEN \cite{Aboutanios2020}}
+                Estimate each gate's \textbf{texture}, normalise it out, then pool the gates
                 \begin{itemize}
-                    \item[+] More samples
-                    \item[$-$] Texture changes the power, so many gates get \textbf{rejected}
+                    \item[+] Keeps gates instead of rejecting them
+                    \item[$-$] Still ends in an \textbf{AMF-type} test
                 \end{itemize}
-            \end{block}
-        \end{column}
-        \begin{column}{0.32\textwidth}
-            \begin{block}{Reduced rank}
-                Clutter rank $r \approx N + (M-1)\beta \ll L$: adapt in an $r$-dim subspace \cite{Aboutanios2020} %s EDIT
-                \begin{itemize}
-                    \item[+] Needs $\sim 2r$ gates, not $2L$
-                    \item[$-$] Still Gaussian, texture ignored
-                \end{itemize}
-            \end{block}
+            \end{exampleblock}
         \end{column}
     \end{columns}
     \vspace{3mm}
     \begin{alertblock}{Common thread}
-        All reduce how much \emph{homogeneous} training data is needed, but they are fixes to Gaussian detectors. None uses the K-distribution the way the OKD does.
+        SDS and hybrid reduce how much \emph{homogeneous} training data is needed. TEN uses the K model, but only recovers texture \textbf{ratios}, not $\tau$ and $\mathbf{G}$. No practical implementation of the OKD's optimum structure has been developed yet.
     \end{alertblock}
 \end{frame}
 
 %% ----- Research Aim ----- %%
 \section{Research Aim}
 
-%% ----- Problem Statement and Research Gap ------ %%
-\subsection{Problem Statement}
-\begin{frame}{Problem Statement and Research Gap}
+%% ----- Research Gap, Aim, Approach, Evaluation and Scope ------ %%
+\subsection{Research Gap and Aim}
+\begin{frame}{Research Gap and Aim}
     \small
-    \begin{block}{Problem}
-        Detect small targets in maritime airborne radar, where the clutter is spiky and heterogeneous (K-distributed), while keeping the false-alarm rate fixed (CFAR).
-    \end{block}
-    \vspace{1mm}
-    \begin{columns}[T]
-        \begin{column}{0.32\textwidth}
-            \begin{block}{Gaussian detectors}
-                AMF, NAMF, Kelly: practical and CFAR, but \textbf{mismatched} to K clutter
-            \end{block}
-        \end{column}
-        \begin{column}{0.32\textwidth}
-            \begin{block}{OKD \cite{Gini1998}}
-                Optimum for K clutter, but \textbf{clairvoyant}: needs the true $\mathbf{G}$ and texture statistics
-            \end{block}
-        \end{column}
-        \begin{column}{0.32\textwidth}
-            \begin{block}{TEN \cite{Aboutanios2020}}
-                Practical and handles texture, but still ends in an \textbf{AMF-type} statistic
-            \end{block}
-        \end{column}
-    \end{columns}
-    \vspace{2mm}
-    \begin{alertblock}{The gap}
-        No practical detector uses the OKD's optimum structure. It is not known how much performance, or CFAR behaviour, the OKD keeps when its unknowns are replaced by estimates such as the SCM.
+    \begin{alertblock}{Gap}
+        No practical OKD yet: how much performance and CFAR survive when its unknowns are estimated (e.g.\ the SCM)?
     \end{alertblock}
-\end{frame}
-
-%% ----- Aim, Approach, Evaluation and Scope ------ %%
-\subsection{Aim and Approach}
-\begin{frame}{Aim and Approach}
-    \small
-    \begin{block}{Aim}
-        Investigate a \textbf{practical version of the OKD} for K-distributed sea clutter
-    \end{block}
+    \vspace{1mm}
+    \textbf{Aim:} investigate a \textbf{practical version of the OKD} for K-distributed clutter
+    \vspace{1mm}
     \begin{columns}[T]
         \begin{column}{0.54\textwidth}
             \textbf{Approach}
             \begin{enumerate}
                 \item \textbf{Benchmark the OKD}: simulator, OKD and Gaussian detectors
                 \item \textbf{OKD with the SCM}, with and without removing the texture; still CFAR?
-                \item \textbf{Estimate the texture shape $a$}; OKD sensitivity to errors in $a$
+                \item \textbf{Combine TEN and the OKD}: no explicit $\tau$ or $\mathbf{G}$ needed
             \end{enumerate}
         \end{column}
         \begin{column}{0.43\textwidth}
@@ -398,18 +379,15 @@
             \end{itemize}
         \end{column}
     \end{columns}
-    \vspace{0.5mm}
-    \begin{exampleblock}{Scope}
-        Airborne maritime STAP; K-distributed clutter with speckle $\mathbf{G}$ shared across gates. \textbf{Stretch:} combine TEN and the OKD; real (Ingara) data
-    \end{exampleblock}
+    \vspace{1mm}
 \end{frame}
 
-%% ----- Section 5: Preliminary Work ------ %%
-\section{Preliminary Work}
+%% ----- Section 5: Preliminary and Future Work ------ %%
+\section{Preliminary and Future Work}
 
 %% 5.1 Clutter Simulator
 \subsection{Clutter Simulator}
-\begin{frame}{A Validated Clutter Simulator}
+\begin{frame}{Clutter Simulator}
     \small
     \begin{columns}[T]
         \begin{column}{0.56\textwidth}
@@ -425,8 +403,8 @@
             {\scriptsize Clutter ridge along $f_d = \beta f_s$}
         \end{column}
     \end{columns}
-    \vspace{1mm}
-    Clutter-patch model \cite[eq.~(13)]{Melvin2004}: $N_a$ ambiguous ranges, $N_c$ patches per ring
+    \vspace{4mm}
+    Clutter-patch model \cite{Melvin2004}: $N_a$ ambiguous ranges, $N_c$ patches per ring
     \[ \mathbf{c}_k = \sum_{m=1}^{N_a}\sum_{n=1}^{N_c} \mathbf{a}_{s\text{-}t}(m,n;k) \odot \mathbf{s}_{s\text{-}t}\big(f_{sp/m,n},\, \tilde f_{d/m,n};k\big),
        \qquad \tilde f_{d/m,n} = \frac{2 v_{r/m,n} T}{\lambda} \]
     \vspace{-2mm}
@@ -434,6 +412,8 @@
         \item $\mathbf{a}_{s\text{-}t}$: random voltages $\propto\sqrt{\text{RCS}}$; here $N_a = 1$, times $\sqrt{\tau_k}$ per gate
         \item Checks: K-distributed amplitudes; ridge on $f_d = \beta f_s$ in the MVDR spectrum
     \end{itemize}
+        \vspace{-1mm}
+        {\color{structure}\textbf{Next:}} Monte Carlo $P_{fa}$ and $P_d$, OKD vs AMF and NAMF (sub-goal 1)
 \end{frame}
 
 %% 5.2 Sample vs True Covariance
@@ -468,33 +448,12 @@
     \end{columns}
     \vspace{1mm}
     \begin{alertblock}{Why it matters for the aim}
-        This is the loss in a linear filter. The open question is what the SCM costs \emph{inside the OKD}.
+        That is the loss in a linear filter. What does the SCM cost \emph{inside the OKD}?
     \end{alertblock}
+    {\color{structure}\textbf{Next:}} OKD with $\hat{\mathbf{R}}$, texture removed or not; still CFAR? (sub-goal 2)
 \end{frame}
 
-%% ----- Section 6: Future Work ----- %%
-\section{Future Work}
-
-%% 6.1 Progress and Next Steps
-\subsection{Progress and Next Steps}
-\providecommand{\pc}[2][0.35]{\parbox[t]{#1\textwidth}{\raggedright #2}}
-\begin{frame}{Progress and Next Steps}
-    \small
-    \renewcommand{\arraystretch}{1.4}
-    \begin{tabular}{@{}l l l@{}}
-        \toprule
-        \textbf{Sub-goal} & \textbf{Done} & \textbf{Next} \\
-        \midrule
-        \pc[0.22]{1. Benchmark the OKD} & \pc{K-clutter simulator validated; AMF, NAMF, clairvoyant and OKD statistics coded} & \pc{Monte Carlo $P_{fa}$ and $P_d$: OKD vs AMF, NAMF} \\
-        \pc[0.22]{2. OKD with the SCM} & \pc{SCM vs true covariance in the MVDR spectrum} & \pc{OKD with $\hat{\mathbf{R}}$, with and without removing texture; $P_{fa}$ vs threshold} \\
-        \pc[0.22]{3. Estimate the shape $a$} & \pc{---} & \pc{Estimate $\hat a$ from training data; OKD loss vs error in $a$} \\
-        \midrule
-        \pc[0.22]{\emph{Stretch}} & \pc{---} & \pc{Combine TEN and the OKD; real (Ingara) data} \\
-        \bottomrule
-    \end{tabular}
-\end{frame}
-
-%% 6.2 Projected Timeline and Risks
+%% 5.3 Projected Timeline and Risks
 \subsection{Projected Timeline and Risks}
 \begin{frame}{Projected Timeline and Risks}
     \centering
@@ -539,7 +498,6 @@
     \end{columns}
 \end{frame}
 
-\appendix  
 %% ----- Summary ----- %%
 \providecommand{\rc}[1]{\parbox[t]{0.68\textwidth}{\raggedright #1}}
 \begin{frame}{Summary}
@@ -557,15 +515,18 @@
     \end{tabular}
     \vspace{5mm}
     \begin{center}
-        {\Large \textbf{Questions?}}
+        {\Large \textbf{Thank you. Questions?}}
     \end{center}
 \end{frame}
 
 \appendix
 %% ----- References ------ %%
+{
+\setbeamertemplate{headline}{}
 \begin{frame}[allowframebreaks]{References}
     \printbibliography[heading=none]
 \end{frame}
+}
 
 %% ----- Backup Slides ----- %%
 %% ----- B1: Estimating the shape parameter ------ %%
@@ -755,11 +716,5 @@
         \end{column}
     \end{columns}
 \end{frame}
-
-
-
-
-
-
 
 \end{document}	
