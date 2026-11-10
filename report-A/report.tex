@@ -1,0 +1,128 @@
+\documentclass[10pt, a4paper]{report}
+
+\title{Thesis A - Report}
+\author{z5360316}
+\date{November 2026}
+
+\input{shared/packages}
+\input{shared/macros}
+\input{shared/acronyms}
+\input{shared/preamble}
+
+%% preamble
+\usepackage[margin=2cm]{geometry}
+\renewcommand{\baselinestretch}{1.5}%
+\usepackage{titlesec}
+% Chapter: "1  Background" on one line, \LARGE, no big gap above
+\titleformat{\chapter}[display]{\normalfont\bfseries}{\LARGE\chaptertitlename\ \thechapter}{0.5ex}{\LARGE}
+\titlespacing*{\chapter}{0pt}{0pt}{1.5ex plus .2ex}
+% Sections one size smaller than default
+\titleformat*{\section}{\normalfont\large\bfseries}
+\titleformat*{\subsection}{\normalfont\normalsize\bfseries}
+\titleformat*{\subsubsection}{\normalfont\normalsize\bfseries}
+\titlespacing*{\section}{0pt}{2ex plus 1ex minus .2ex}{1ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{1.5ex plus 1ex minus .2ex}{0.8ex plus .2ex}
+
+\begin{document}
+
+\chapter{Introduction}\label{ch:intro}
+\section{Motivation}
+Radar target detection is an important concept used in a wide range of applications from search and rescue to maritime border protection. Effective radar target detection requires the suppression of clutter and noise. This is achieved by applying adaptive filters to the \gls{cut}. Specifically, for the area of study of this thesis, we will be focusing on the example of target detection in the context of a maritime environment.
+
+\section{Problem Statement}\label{sec:problem_statement}
+Effective radar target detec
+
+
+\section{Thesis Objectives}
+
+\section{Outline}
+
+
+
+\chapter{Background}\label{ch:background}
+The theory discussed in this section form the background required in the understanding of this thesis and is drawn from a review of the radar detection literature.
+
+\section{Multichannel Space-Time Array Radar}
+Multichannel space-time array radar refers to radar systems that combine multiple spatial antenna channels with temporal pulse processing to filter out clutter and detect moving targets. The adaptive form of this processing widely known as \gls{stap} \cite{Melvin2004}. 
+
+In a mono-static, pulsed radar, the same $N$ antenna elements both transmit and receive. A \gls{t/r} switch exists to alternate each element between the two modes. On transmit, the elements act together as one aperture. Their phases are set so that the radiated waves add coherently in one direction, forming a single beam pointed at the region of interest. On receive, the elements act separately to produce $N$ simultaneous outputs or \emph{spatial samples}. This is possible when each element has its own receiver chain and digitiser, producing $N$ independent channels.
+
+\subsection{A Radar Signal Model}
+
+Consider an airborne radar with a side-looking linear array of $N$ antenna elements, with inter-element spacing $d$, travelling on a platform with velocity $v_p$, as shown in Figure~\ref{fig:airborne_radar_signal_model}. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.25\linewidth]{figs/airborne_radar_signal_model.png}
+    \caption{Airborne radar signal model}
+    \label{fig:airborne_radar_signal_model}
+\end{figure}
+
+Suppose the radar transmits $M$ pulses at a pulse repetition frequency, $f_\mathrm{PRF}$, and that consecutive pulses are separated by the pulse repetition interval $T_r=1/f_\mathrm{PRF}$. For any pulse, which travels out and back at the speed of light $c$, an echo arriving at time $t$ after transmission must originate from a range $R=ct/2$. Hence, each \emph{fast-time} sample corresponds to a distinct range. These samples are called range-gates (or range cells), and the radar collects $N_r$ of them spanning the observed range window, also shown in Figure~\ref{fig:airborne_radar_signal_model}.
+
+For each of the $N_r$ range gates, we obtain a $N\times M$ space-time grid; one per (antenna, pulse) pair. Stacking these across all range gates yields the $N\times M\times N_r$ data cube \cite{Melvin2004}. Detection is then carried out one range gate at a time, with the gate currently being tested for a target called the \gls{cut}.
+
+\subsubsection{Dimension 1: Space ($N$ antennas encodes angle)}
+A wave coming from an angle $\theta$ (relative to the broadside of the platform) arrives at each of the $N$ antennas one after another. Between each adjacent antenna in the linear array, an additional path length of $d\sin\theta$ is traversed. A simple derivation of this is depicted in Figure~\ref{fig:path_diff}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\linewidth]{figs/path_diff.png}
+    \caption{Path difference between adjacent antennas}
+    \label{fig:path_diff}
+\end{figure}
+
+For a signal of wavelength $\lambda$, this path difference constitutes a phase shift of $2\pi\frac{d}{\lambda}\sin\theta$ in the received signal between adjacent antennas. We call the \emph{normalised frequency} 
+
+\begin{equation}
+    f_s=\frac{d}{\lambda}\sin\theta
+\end{equation}
+
+Hence, for each antenna across the array, the phase increases linearly, which is described by the \emph{spatial steering vector}
+
+\begin{equation}
+    \vb s_\text{sp} = \left[1\quad e^{j2\pi f_s}\quad\cdots\quad e^{j2\pi(N-1)f_s}\right]^T,
+\end{equation}
+
+where the first antenna is taken as reference.
+
+\subsubsection{Dimension 2: Slow-time ($M$ pulses) encodes Doppler}
+Let $v_r$ be the radial velocity of the target relative to the moving platform. Then between pulses (spaced by the pulse repetition interval $T_r=1/f_\mathrm{PRF}$), a moving target thus changes its range by $\Delta R=v_rT_r$. As each pulse travels to the target and back, the round-trip path changes by $2\Delta R$, which for a wavelength $\lambda$ constitutes a phase shift between consecutive pulses as
+
+\begin{equation}
+    \Delta\phi = \frac{2\pi}{\lambda}\,(2\Delta R)
+               = \frac{2\pi}{\lambda}2v_rT_r=2\pi f_d
+\end{equation}
+
+where $f_d$ is the \emph{normalised Doppler frequency} given by
+
+\begin{equation}
+    f_d=\frac{2v_rT_r}{\lambda}=\frac{2v_r}{\lambda f_\mathrm{PRF}}.
+\end{equation}
+
+As in the spatial case, for each consecutive pulse across the $M$ pulses, the phase increases linearly, which is described by the \emph{temporal steering vector}
+
+\begin{equation}
+    \vb s_\text{temp} = \left[1 \quad e^{j2\pi f_d} \quad \cdots \quad e^{j2\pi(M-1)f_d}\right]^T.
+\end{equation}
+
+Note that only radial movement of the target is considered since any tangential motion does not contribute to a change in range and hence has no Doppler effect.
+
+\subsubsection{Space-Time Snapshot}
+A target at a given (angle, Doppler) produces at each (antenna, pulse) sample, a phase that is the sum of its spatial phase (from the angle) and its temporal phase (from the Doppler), with respect to an arbitrary reference origin. The two phases add and thus the complex factors multiply.
+
+\section{Detection Theory}
+\subsection{Hypothesis Test $H_0/H_1$}
+The target detection problem is commonly formulated as a binary hypothesis test \cite{Aboutanios2020}.
+
+
+
+
+
+
+
+\newpage
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

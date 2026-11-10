@@ -1,0 +1,52 @@
+% doppler_phase.tex -- pulse-to-pulse range change and Doppler phase progression
+% Needs: \usepackage{tikz} and \usetikzlibrary{arrows.meta,calc,decorations.pathreplacing}
+% Use:   \begin{figure}\centering\input{figs/doppler_phase}\caption{...}\end{figure}
+\begin{tikzpicture}[>=Stealth, font=\small,
+    tgt/.style={circle, draw=red!75!black, fill=red!75!black, inner sep=1.6pt},
+    tgtghost/.style={circle, draw=red!75!black, fill=white, inner sep=1.6pt}]
+  \def\Ro{6.0}   % range at pulse m=0 (drawing units)
+  \def\dR{1.1}   % range change per pulse, v_r T_r (drawing units)
+  \def\ph{40}    % phase step 2*pi*f_d (degrees) for the phasor panel
+
+  % --- Radar -----------------------------------------------------------
+  \draw[thick, fill=gray!20] (0,-0.35) -- (0.35,0) -- (0,0.35) -- cycle;
+  \node[below, align=center] at (0.1,-0.4) {radar\\(platform)};
+  \draw[gray, ->] (0.4,0) -- (\Ro+0.9,0) node[right, black] {range};
+
+  % --- Target positions at pulses m = 0, 1, 2 --------------------------
+  \foreach \m/\sty in {0/tgtghost,1/tgtghost,2/tgt}
+    \node[\sty] (t\m) at ({\Ro-\m*\dR},0) {};
+  \foreach \m in {0,1,2}
+    \node[below=3pt] at (t\m) {$m{=}\m$};
+  \draw[red!75!black, ->, thick] ($(t2)+(0,0.35)$) -- ++(-0.8,0)
+      node[above, pos=0.5] {$v_r$};
+
+  % --- Two-way paths for pulses 0 and 1 --------------------------------
+  \draw[blue!70!black, ->] (0.45,1.35) -- ({\Ro},1.35);
+  \draw[blue!70!black, <-] (0.45,1.15) -- ({\Ro},1.15);
+  \node[blue!70!black, left] at (0.45,1.25) {pulse $m{=}0$: $2R_0$};
+  \draw[blue!70!black, ->] (0.45,0.85) -- ({\Ro-\dR},0.85);
+  \draw[blue!70!black, <-] (0.45,0.65) -- ({\Ro-\dR},0.65);
+  \node[blue!70!black, left] at (0.45,0.75) {pulse $m{=}1$: $2(R_0 - v_rT_r)$};
+  \draw[gray, densely dotted] (t0) -- (\Ro,1.45);
+  \draw[gray, densely dotted] (t1) -- ({\Ro-\dR},0.95);
+
+  % --- Range change between pulses -------------------------------------
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}]
+      ($(t1)+(0,-0.75)$) -- ($(t0)+(0,-0.75)$)
+      node[midway, below=5pt] {$v_rT_r$};
+
+  % --- Phasor panel: one phase step of 2*pi*f_d per pulse -------------
+  \begin{scope}[shift={(\Ro+3.2,0.3)}]
+    \draw[gray] (0,0) circle (1);
+    \draw[gray!60] (-1.2,0) -- (1.2,0) (0,-1.2) -- (0,1.2);
+    \foreach \m/\c in {0/black!40,1/black!65,2/black}
+      \draw[->, thick, \c] (0,0) -- ({\m*\ph}:1);
+    \node[black!40, below] at (1,0) {\footnotesize$m{=}0$};
+    \node[black!65, right] at (\ph:1) {\footnotesize$1$};
+    \node[black, above] at ({2*\ph}:1) {\footnotesize$2$};
+    \draw[red!75!black, ->] (0.4,0) arc (0:\ph:0.4);
+    \node[red!75!black] at ({\ph/2}:0.68) {\scriptsize$2\pi f_d$};
+    \node[below, align=center] at (0,-1.2) {echo phase\\at pulse $m$};
+  \end{scope}
+\end{tikzpicture}
