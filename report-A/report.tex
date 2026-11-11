@@ -28,7 +28,13 @@
 
 \chapter{Introduction}\label{ch:intro}
 \section{Motivation}
+A radar is a system that transmits short pulses of radio waves and listens for an echo. Radars split the scene it is looking at into \emph{range gates} (or range cells), and target detection is essentially asking the question
+
 Radar target detection is an important concept used in a wide range of applications from search and rescue to maritime border protection. Effective radar target detection requires the suppression of unwanted clutter and noise. This is achieved by applying adaptive filters to the \gls{cut}. For the area of study of this thesis, we will be focusing on the example of target detection in the context of a maritime environment, however the same ideas apply frequently elsewhere.
+
+\section{Context}
+A radar does 
+
 
 \section{Problem Statement}\label{sec:problem_statement}
 Effective radar target detection 
@@ -49,6 +55,7 @@ Multichannel space-time array radar refers to radar systems that combine multipl
 In a mono-static, pulsed radar with $N$ antenna elements, the antenna elements both transmit and receive. A \gls{t/r} switch exists to alternate each element between the two modes. On transmit, the elements act together as one aperture. Their phases are set so that the radiated waves add coherently in one direction, forming a single beam pointed at the region of interest. On receive, the elements act separately to produce $N$ simultaneous outputs or \emph{spatial samples}. This is possible when each element has its own receiver chain and digitiser, producing $N$ independent channels.
 
 \subsection{An Airborne Radar Signal Model}
+\label{sec:radar_signal_model}
 
 Consider an airborne radar with a side-looking linear array of $N$ antenna elements, with inter-element spacing $d$, travelling on a platform with velocity $v_p$, as shown in Figure~\ref{fig:airborne_radar_signal_model}. 
 
@@ -64,7 +71,7 @@ Suppose the radar transmits $M$ pulses at a pulse repetition frequency, $f_\math
 For each of the $N_r$ range gates, we obtain a $N\times M$ space-time grid; one per (antenna, pulse) pair. Stacking these across all range gates yields the $N\times M\times N_r$ data cube \cite{Melvin2004}. Detection is then carried out one range gate at a time, with the gate currently being tested for a target called the \acrfull{cut}.
 
 \subsubsection{Dimension 1: Space ($N$ Antennas Encode Angle)}
-A plane wave arriving from an angle $\theta$ (relative to the broadside) arrives at each of the $N$ antennas one after another. Between each adjacent antenna in the linear array, an additional path length of $d\sin\theta$ is traversed. A simple derivation of this is depicted in Figure~\ref{fig:path_diff}.
+A plane wave arriving from an angle $\theta$ (relative to the broadside) arrives at each of the $N$ antennas one after another. Between each adjacent antenna in the linear array, an additional path length of $d\sin\theta$ is traversed. A simple derivation is depicted in Figure~\ref{fig:path_diff}.
 
 \begin{figure}[h]
     \centering
@@ -74,79 +81,94 @@ A plane wave arriving from an angle $\theta$ (relative to the broadside) arrives
 \end{figure}
 
 For a narrowband signal of wavelength $\lambda$\footnote{The transmitted pulse is generally a burst of a sinusoidal carrier of frequency $f_c=c/\lambda$, so a delay $\tau$ shifts its phase by $2\pi f_c\tau$. Under the narrowband assumption the delay across the array is small compared with the pulse duration, so only this phase shift is significant.}, a path difference of one wavelength corresponds to a phase change of $2\pi$. Hence, a path difference of $d\sin\theta$ between adjacent antennas constitutes a phase shift of 
-
 \begin{equation}
     \Delta\phi=2\pi\frac{d}{\lambda}\sin\theta=2\pi f_s,
-\end{equation}
-
+\end{equation} 
 where $f_s$ is the \emph{normalised spatial frequency} given by
-
 \begin{equation}
     f_s=\frac{d}{\lambda}\sin\theta.
     \label{eq:f_s}
-\end{equation}
-
+\end{equation} 
 Hence, for each antenna across the array, the phase increases linearly, which is described by the \emph{spatial steering vector}
-
 \begin{equation}
     \vb s_\text{sp} = \left[1\quad e^{j2\pi f_s}\quad\cdots\quad e^{j2\pi(N-1)f_s}\right]^T
     \label{eq:s_sp}
-\end{equation}
+\end{equation} 
 where the first antenna is taken as an arbitrary reference.
 
 \subsubsection{Dimension 2: Time ($M$ Pulses Encode Doppler)}
 Let $v_r$ be the radial velocity of the target relative to the moving platform. Then between successive pulses (spaced by the pulse repetition interval $T_r=1/f_\mathrm{PRF}$), a moving target changes its range by $\Delta R=v_rT_r$. As each pulse travels to the target and back, the round-trip path changes by $2\Delta R$, which for a wavelength $\lambda$ constitutes a phase shift of
-
 \begin{equation}
     \Delta\phi = 2\pi\frac{2\Delta R}{\lambda}
                = 2\pi\frac{2v_rT_r}{\lambda}=2\pi f_d
-\end{equation}
-
+\end{equation} 
 where $f_d$ is the \emph{normalised Doppler frequency} given by
-
 \begin{equation}
     f_d=\frac{2v_rT_r}{\lambda}=\frac{2v_r}{\lambda f_\mathrm{PRF}}.
     \label{eq:f_d}
-\end{equation}
-
-As in the spatial case, for each consecutive pulse across the $M$ pulses, the phase increases linearly, which is described by the \emph{temporal steering vector}
-
+\end{equation} As in the spatial case, for each consecutive pulse across the $M$ pulses, the phase increases linearly, which is described by the \emph{temporal steering vector}
 \begin{equation}
     \vb s_\text{temp} = \left[1 \quad e^{j2\pi f_d} \quad \cdots \quad e^{j2\pi(M-1)f_d}\right]^T.
     \label{eq:s_temp}
 \end{equation}
-
 Note that only radial movement of the target is considered since any tangential motion does not contribute to a change in range and hence has no Doppler effect.
 
 \subsubsection{Combining Both Dimensions: Space-Time Snapshot}
-A target at a given (angle, Doppler) produces at each (antenna, pulse) sample, a phase that is the sum of its spatial phase (from the angle) and its temporal phase (from the Doppler), with respect to an arbitrary reference origin. The two phases add and thus the complex factors in the steering vectors \eqref{eq:s_sp}, \eqref{eq:s_temp} multiply. Collecting over all $(n, m)$ pairs gives the $N\times M$ \emph{spatio-temporal steering matrix} given by the outer product
-
+A target at a given (angle, Doppler) produces at each (antenna, pulse) sample, a phase that is the sum of its spatial phase (from the angle) and its temporal phase (from the Doppler), with respect to an arbitrary reference origin. The two phases add and thus the corresponding complex factors in the steering vectors \eqref{eq:s_sp}, \eqref{eq:s_temp} multiply; the sample at antenna $n$, pulse $m$ carries $(\vb s_\mathrm{sp})_n(\vb s_\mathrm{temp})_m$. Collecting over all $(n, m)$ pairs gives the $N\times M$ \emph{space-time steering matrix} which is also given by the outer product
 \begin{equation}
-    \m S=\vb s_\mathrm{sp} s_\mathrm{temp}^T.
+    \m S=\vb s_\mathrm{sp} \vb s_\mathrm{temp}^T.
     \label{eq:steering_matrix}
 \end{equation}
-
-This forms part of the received signal that represents the signature left by the target at its particular angle and Doppler in the data.
+The matrix $\m S$ is therefore the signature of a target at angle $\theta$ and normalised Doppler $f_d$, as it would appear in the data with nothing else present. In practice, this signature is never observed in isolation. It is instead scaled by the target's unknown complex amplitude $\alpha$ and accompanied by unwanted interference (clutter and noise).
 
 \subsection{The Received Signal}
-As mentioned previously, the received signal contains both the target as well as the unwanted clutter and noise return. The received signal for a single range gate is an $N\times M$ slice of the data cube
-
+The received signal for a single range gate is an $N\times M$ slice of the data cube 
 \begin{equation}
     \m X = \alpha\m S + \m C + \m N,
+\end{equation} 
+where $\m S=\vb s_\mathrm{sp} s_\mathrm{temp}^T$ is the target spatio-temporal steering matrix from \eqref{eq:steering_matrix}, $\m C$ is the clutter return, $\m N$ is the thermal noise and $\alpha$ is the complex target amplitude. Vectorising by stacking the columns gives received vector of length $L=NM$
+\begin{equation}
+    \vb x = \operatorname{vec}(\m X) = \alpha\,\vb s + \vb c + \vb n
+    \label{eq:received_vec}
 \end{equation}
+where $\vb s = \operatorname{vec}(\m S)$ is the \emph{space-time steering vector}, $\vb c=\operatorname{vec}(\m C)$ and $\vb n=\operatorname{vec}(\m N)$. \\
 
-where $\m S=\vb s_\mathrm{sp} s_\mathrm{temp}^T$ is the target spatio-temporal steering matrix from \eqref{eq:steering_matrix}, $\m C$ is the clutter reutrn, $\m N$ is the thermal noise and $\alpha$ is the complex target amplitude.
+In vector form, all spatial, temporal and space-time correlations of the interference are captured by a single $L\times L$ covariance matrix, which allows standard vector detection theory to be applied. Whilst the target return and noise terms will be described in the subsections below, the whole of Section~\ref{sec:clutter} will be dedicated to the discussion of the K-distributed clutter model.
 
+\subsubsection{Target Return, $\alpha\vb s$}
+The target contributes the term $\alpha\vb s$, which separates the target return into a known \emph{shape} $\vb s$, and an unknown \emph{scale}, $\alpha$. This is the standard target model of adaptive detection \cite{Reed1974, Kelly1986, Chen1991} and of \gls{stap} \cite{Ward1994,Melvin2004}.
 
+The steering vector $\vb s$ fixes the shape of the target's signature set by its angle and Doppler, as seen in Equation \eqref{eq:steering_matrix} and is assumed to be known. The complex amplitude $\alpha=|\alpha|e^{j\psi}$ scales this signature equally at every antenna and pulse. This is under the assumption that the target does not fluctuate over the \gls{cpi}. Its magnitude depends on how strongly the target reflects and on its range, while its phase depends on the exact two-way path to the target to within a fraction of a wavelength. Neither can be predicted in practice, so $\alpha$ is treated as unknown, with its phase modelled as uniformly random \cite{Richards2005}. 
 
+\subsubsection{Noise Return, $\vb n$}
+Noise in the radar return can be attributed mostly to thermal noise from receiver electronics. Thermal noise is generated independently in each receiver channel and on each pulse. It is modelled as a zero-mean, white complex Gaussian noise,
+\begin{equation}
+    \vb n\sim\mc{CN}(\vb 0, \sigma^2\m I),
+\end{equation}
+where $\sigma^2$ is the noise power, and is independent of the clutter. The covariance is $\sigma^2\m I$ because the noise in different channels and on different pulses is uncorrelated, so all off-diagonal entries are zero, and every channel has the same noise power $\sigma^2$, so all diagonal entries are equal.
 
+\section{The K-distributed Clutter Model}
+\label{sec:clutter}
+
+\subsection{Clutter Return, $\vb c$}
+Clutter is the unwanted echoes from the environment. In a maritime context, clutter therefore refers to reflections off the sea's surface.
+
+\subsubsection{Sea Clutter Statistics}
+Sea clutter observed by high-resolution radars, particularly at low and medium grazing angles, depart from the classical Gaussian and homogeneous assumption in two ways \cite{Ward2013, Rosenberg2017}:
+\begin{enumerate}
+    \item \textbf{Spiky (non-Gaussian).} 
+\end{enumerate}
+
+\subsubsection{Clutter Ridge and Brennan's Rule}
+
+\subsubsection{Melvin's Clutter Patch Model \cite{Melvin2004}}
 
 
 
 
 \newpage
 \section{Detection Theory}
-\subsection{Hypothesis Test $H_0/H_1$}
+\subsection{Hypothesis Testing $H_0/H_1$}
 The target detection problem is commonly formulated as a binary hypothesis test as in \cite{Melvin2004}, \cite{Aboutanios2020}. We define the null hypothesis, $H_0$ to be that the target is not present and the alternative hypothesis $H_1$, being that the target is present. For the \gls{cut}, the two hypotheses correspond to the received vector
 \begin{align}
     H_0:\quad \vb x&=\vv\varsigma\nonumber\\
@@ -159,19 +181,27 @@ so that $H_1$ is declared (a detection) when $y\geq\gamma$ and $H_0$ otherwise. 
 \subsubsection{Detection and False-Alarm Probabilities}
 A detector can make two fundamental kinds of error. A false-alarm declares a target when none is present, and a missed detection fails to declare a target that is present. Performance can therefore be summarised by two fundamental statistical measures: the probability of false alarm and the probability of detection,
 \begin{align}
-    P_{fa} &= \Pr(y\ge\gamma\mid H_0), \nonumber\\
-    P_{d}  &= \Pr(y\ge\gamma\mid H_1), \nonumber
+    P_{fa} &= P(y\ge\gamma\mid H_0), \nonumber\\
+    P_{d}  &= P(y\ge\gamma\mid H_1), \nonumber
 \end{align}
 with the probability of missed detection $P_m=1-P_d$. Clearly, raising $\gamma$ lowers $P_{fa}$ but also lowers $P_d$, so they cannot be minimised simultaneously. Sweeping $\gamma$ traces the \gls{roc}, the curve of $P_d$ against $P_{fa}$, which characterises the detector independently of any single threshold.
 
-\subsection{The Likelihood Ratio and the Generalised Likelihood Ratio Test (GLRT)}
+\subsection{The Neyman-Pearson Criterion and the GLRT}
 Since $P_d$ and $P_{fa}$ cannot both be made arbitrarily small, radar detection generally adopts the \gls{np} criterion \cite{Neyman1933}. The \gls{np} lemma states that
 
 Under the \gls{np} criterion, the exact likelihood ratio or an approximation of the ratio forms the basis of most of the existing
 
+\subsection{Constant False Alarm Rate (CFAR)}
 
+\section{Current Detectors}
+\subsection{Gaussian Adaptive Detectors}
+\subsection{Compound-Gaussian Adaptive Detectors}
+\subsection{Practical Approaches in Heterogenous Clutter}
 
-
+\section{Thesis Outline}
+\section{Preliminary Work}
+\section{Project Planning}
+\section{Conclusion}
 
 
 \newpage

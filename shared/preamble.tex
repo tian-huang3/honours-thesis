@@ -4,3 +4,12 @@
       keywordstyle=\color{blue!70!black}, commentstyle=\color{green!40!black},
       stringstyle=\color{red!60!black}, showstringspaces=false}
 \setlength{\skip\footins}{20pt plus 4pt minus 2pt}
+
+% More space above/below display equations
+\makeatletter
+\g@addto@macro\normalsize{%
+  \setlength\abovedisplayskip{20pt plus 4pt minus 4pt}%
+  \setlength\belowdisplayskip{20pt plus 4pt minus 4pt}%
+  \setlength\abovedisplayshortskip{12pt plus 4pt}%
+  \setlength\belowdisplayshortskip{12pt plus 4pt minus 2pt}}
+\makeatother
