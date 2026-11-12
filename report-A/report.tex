@@ -24,28 +24,54 @@
 \titlespacing*{\subsection}{0pt}{1.5ex plus 1ex minus .2ex}{0.8ex plus .2ex}
 
 \begin{document}
+
+\printnoidxglossary[type=\acronymtype, title={List of Acronyms}, style=long, nogroupskip, nonumberlist]
 \tableofcontents
 
 \chapter{Introduction}\label{ch:intro}
 \section{Motivation}
-A radar is a system that transmits short pulses of radio waves and listens for an echo. Radars split the scene it is looking at into \emph{range gates} (or range cells), and target detection is essentially asking the question
+A radar is a system that transmits radio waves and listens for the echoes reflected back by objects in its surroundings \cite{Skolnik2001, Richards2005}. From these echoes, the presence of an object, known as a \emph{target}, can be detected, and its range, direction and velocity can be estimated. Since \gls{em} waves travel long distances and can work through obstacles such as darkness, fog and rain, radar can operate in conditions where optical sensors cannot. For this reason, radar target detection is used in a wide range of important applications, such as air traffic control or search and rescue operations. 
 
-Radar target detection is an important concept used in a wide range of applications from search and rescue to maritime border protection. Effective radar target detection requires the suppression of unwanted clutter and noise. This is achieved by applying adaptive filters to the \gls{cut}. For the area of study of this thesis, we will be focusing on the example of target detection in the context of a maritime environment, however the same ideas apply frequently elsewhere.
+However, a radar never receives the echo of a target alone. It also receives \emph{noise}, mostly thermal noise generated in receiver electronics, and \emph{clutter}, the unwanted echoes from the environment. Thermal noise is well understood and comparatively easy to account for. Clutter is often much more difficult to manage, particularly at sea, where it is often stronger than the echo of a small or slow-moving target. Thus, this thesis mainly focuses on the challenges of target detection in a maritime environment.
 
-\section{Context}
-A radar does 
+\section{Context: What Sea Clutter Looks Like}
+Effective target detection depends on the suppression of noise and clutter. At sea, clutter that is reflected off the surface of the sea can be particularly difficult to suppress due to its nature. Sea clutter has two properties that distinguish it from simpler forms of interference \cite{Ward2013, Rosenberg2017}:
 
+\begin{itemize}
+    \item \textbf{Spiky (non-Gaussian).} Breaking waves form whitecaps which produce short-lived, bright returns known as sea spikes. A sea spike can be as strong as the echo from a boat, so it is easily mistaken for a target.
+    \item \textbf{Heterogeneous.} Ocean swell causes the echo power to rise and fall from one range cell to the next, while wind and currents change the motion of the surface, and hence its Doppler frequency, across the scene. The clutter statistics therefore vary between range cells \cite{Mungara2024}, and we describe this as heterogeneous.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[b]{0.4\linewidth}
+        \centering
+        \includegraphics[height=4cm]{seminar/figs/breaking_waves.jpg}\\[2pt]
+        {\footnotesize (a) Breaking waves}
+    \end{minipage}\hspace{1cm}%
+    \begin{minipage}[b]{0.4\linewidth}
+        \centering
+        \includegraphics[height=4cm]{seminar/figs/swell_group.jpg}\\[2pt]
+        {\footnotesize (b) Ocean swell}
+    \end{minipage}
+    \caption{Two features of the sea surface that make sea clutter non-Gaussian and heterogeneous}
+    \label{fig:sea_surface}
+\end{figure}
+
+Most classical radar detectors are designed under the assumption that the clutter is Gaussian and homogeneous. This assumption is justified when each range cell contains many independent scatterers of similar strength, by the central limit theorem. Modern high-resolution radars, however, resolve patches of sea surface small enough that this no longer holds \cite{Mungara2024}. Compared with Gaussian clutter of the same average power, measured sea clutter produces large amplitudes far more often. It is instead well described by a K-distribution, which keeps a Gaussian model for the fast fluctuations of the ripples but allows each range cell to have its own power, set by the larger waves \cite{Ward1981, Ward2013}. This model is described in detail in Section~\ref{sec:clutter}.
 
 \section{Problem Statement}\label{sec:problem_statement}
-Effective radar target detection 
+Classical adaptive detectors such as the \gls{amf} \cite{Chen1991}, \gls{namf} \cite{Kraut1999}, and Kelly's \gls{glrt} \cite{Kelly1986} are all derived under the Gaussian and homogeneous clutter assumption. Since the clutter covariance is unknown in practice, these detectors estimate it from training data, (usually the range cells surrounding the \gls{cut}), which are assumed to share the same statistics as the \gls{cut}. In sea clutter, both assumptions are broken. As a result, performance of these detectors degrade and the important \gls{cfar} property is lost \cite{Rosenberg2017}.
 
+When the clutter is instead more accurately modelled as K-distributed, the \gls{np} lemma gives the \gls{okd} \cite{Gini1998}, which achieves the best possible detection performance. However, the \gls{okd} requires the speckle covariance and the distribution of the texture to be known, and in practice neither is. It therefore serves only as an optimum, mathematical benchmark.
 
-\section{Thesis Objectives}
+Practical detectors for heterogeneous clutter have been developed to reduce the amount of homogeneous training data required, including single data set detectors \cite{Aboutanios2005, Aboutanios2019} and hybrid detectors \cite{Aboutanios2010}, which improve on the classical detectors under the Gaussian assumption. The \gls{ten} method \cite{Aboutanios2020} is one other practical adaptive detector which does in fact use the K-distributed clutter model, however it never recovers the speckle covariance and texture statistics explicitly. Thus, there exists no practical implementation of a compound-Gaussian detector that takes advantage of the \gls{okd}'s optimum structure. This leads to the objective of this thesis. 
 
-\section{Outline}
+\section{Thesis Aim}
+\label{sec:aim}
+The aim of this thesis is to investigate a practical version of the optimum detector for K-distributed clutter, one that uses only the data available to a real radar, and to determine whether it maintains a constant false-alarm rate. The specific objectives are set out in Chapter~\ref{ch:objectives}, once the necessary background has been introduced.
 
-
-
+%% ------ Chapter: Background ----- %%
 \chapter{Background}\label{ch:background}
 The theory discussed in this section form the background required in the understanding of this thesis and is drawn from a review of the radar detection literature.
 
@@ -151,13 +177,19 @@ where $\sigma^2$ is the noise power, and is independent of the clutter. The cova
 \label{sec:clutter}
 
 \subsection{Clutter Return, $\vb c$}
-Clutter is the unwanted echoes from the environment. In a maritime context, clutter therefore refers to reflections off the sea's surface.
+In a maritime context, clutter refers to the echoes off the surface of the sea. Sea clutter observed by high-resolution radars, particularly at low and medium grazing angles, depart from the classical Gaussian and homogeneous assumption in two ways \cite{Ward2013, Rosenberg2017}; its non-Gaussian and heterogeneous nature. Both effects are captured by the compound-Gaussian model \cite{Ward1981, Ward2013}, where
+\begin{equation}
+    \vb c = \sqrt{\tau}\vb q.
+\end{equation}
+The \emph{speckle} $\vb q \sim \cal CN(\vb 0, \m G)$ is a zero-mean complex Gaussian vector that represents the fast, small-scale scattering from ripples.
+The \emph{texture} $\tau$ is a random variable that represents the local clutter power set by large-scale swell. 
 
-\subsubsection{Sea Clutter Statistics}
-Sea clutter observed by high-resolution radars, particularly at low and medium grazing angles, depart from the classical Gaussian and homogeneous assumption in two ways \cite{Ward2013, Rosenberg2017}:
-\begin{enumerate}
-    \item \textbf{Spiky (non-Gaussian).} 
-\end{enumerate}
+Thus, conditioned on the texture, the received clutter is distributed as
+\begin{equation}
+    \vb c\mid\tau\sim\cal{CN}(\vb 0, \tau\m G)
+\end{equation}
+
+The compound form of the K distribution has been shown \cite{Ward2006} to be an accurate statistical model for radar sea clutter at low grazing angles. 
 
 \subsubsection{Clutter Ridge and Brennan's Rule}
 
@@ -187,9 +219,13 @@ A detector can make two fundamental kinds of error. A false-alarm declares a tar
 with the probability of missed detection $P_m=1-P_d$. Clearly, raising $\gamma$ lowers $P_{fa}$ but also lowers $P_d$, so they cannot be minimised simultaneously. Sweeping $\gamma$ traces the \gls{roc}, the curve of $P_d$ against $P_{fa}$, which characterises the detector independently of any single threshold.
 
 \subsection{The Neyman-Pearson Criterion and the GLRT}
-Since $P_d$ and $P_{fa}$ cannot both be made arbitrarily small, radar detection generally adopts the \gls{np} criterion \cite{Neyman1933}. The \gls{np} lemma states that
+Since $P_d$ and $P_{fa}$ cannot both be made arbitrarily small, radar detection generally adopts the \acrfull{np} criterion \cite{Neyman1933}. The \gls{np} lemma states that the \acrfull{lrt} is the most powerful hypothesis test for distinguishing between two simple hypotheses at a given signicance level. 
 
 Under the \gls{np} criterion, the exact likelihood ratio or an approximation of the ratio forms the basis of most of the existing
+
+
+
+The Neyman-Pearson Lemma states that the likelihood ratio test (LRT) is the most powerful hypothesis test for distinguishing between two simple hypotheses at a given significance level α
 
 \subsection{Constant False Alarm Rate (CFAR)}
 
@@ -198,10 +234,22 @@ Under the \gls{np} criterion, the exact likelihood ratio or an approximation of 
 \subsection{Compound-Gaussian Adaptive Detectors}
 \subsection{Practical Approaches in Heterogenous Clutter}
 
-\section{Thesis Outline}
-\section{Preliminary Work}
-\section{Project Planning}
-\section{Conclusion}
+
+
+
+\chapter{Thesis Objectives}
+\label{ch:objectives}
+The aim of this thesis is therefore to investigate a practical implementation of the \acrfull{okd} for K-distributed clutter. This can be broken down into three main sub-objectives:
+\begin{enumerate}
+    \item \textbf{Benchmark the \gls{okd}.} Develop a simulator for K-distributed clutter and implement the clairvoyant \gls{okd} alongside the Gaussian adaptive detectors, so that the best achievable performance is established as a benchmark.
+    \item \textbf{Implement the \gls{okd} with an estimated covariance.} Replace the true speckle covariance in the \gls{okd} with the \gls{scm} estimated from training data, both with and without first removing the texture from the training cells, and determine how much performance is lost and whether the detector remains \gls{cfar}.
+    \item \textbf{Understand the \gls{ten} method and combine it with the \gls{okd}.} The \gls{ten} method \cite{Aboutanios2020} performs well in K-distributed clutter, but the reasoning behind its construction is not made explicit. Investigate how and why it works, and identify the principle from which it can be derived. Building on this, investigate whether the \gls{ten} method can be combined with the structure of the \gls{okd}, so that neither the texture nor the speckle covariance needs to be estimated explicitly.
+\end{enumerate}
+Each detector is evaluated by Monte Carlo simulation in K-distributed clutter. The \gls{cfar} property is assessed from the false-alarm probability as a function of the threshold, and detection performance is assessed from $P_d$ as a function of the \gls{scr} at a fixed $P_{fa}$, compared against the clairvoyant \gls{okd}, the \gls{amf}, the \gls{namf} and the \gls{ten} detector.
+
+\chapter{Preliminary Work}
+\chapter{Project Planning}
+\chapter{Conclusion}
 
 
 \newpage
