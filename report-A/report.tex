@@ -32,7 +32,7 @@
 \section{Motivation}
 A radar is a system that transmits radio waves and listens for the echoes reflected back by objects in its surroundings \cite{Skolnik2001, Richards2005}. From these echoes, the presence of an object, known as a \emph{target}, can be detected, and its range, direction and velocity can be estimated. Since \gls{em} waves travel long distances and can work through obstacles such as darkness, fog and rain, radar can operate in conditions where optical sensors cannot. For this reason, radar target detection is used in a wide range of important applications, such as air traffic control or search and rescue operations. 
 
-However, a radar never receives the echo of a target alone. It also receives \emph{noise}, mostly thermal noise generated in receiver electronics, and \emph{clutter}, the unwanted echoes from the environment. Thermal noise is well understood and comparatively easy to account for. Clutter is often much more difficult to manage, particularly at sea, where it is often stronger than the echo of a small or slow-moving target. Thus, this thesis mainly focuses on the challenges of target detection in a maritime environment.
+However, a radar never receives the echo of a target alone. It also receives \emph{noise}, mostly thermal noise generated in receiver electronics, and \emph{clutter}, the unwanted echoes from the environment. Thermal noise is well understood and comparatively easy to account for. Clutter is often much more difficult to manage, particularly at sea, where it is often stronger than the echo of a small or slow-moving target. In this thesis, we mainly focus on the challenges of target detection in a maritime environment.
 
 \section{Context: What Sea Clutter Looks Like}
 Effective target detection depends on the suppression of noise and clutter. At sea, clutter that is reflected off the surface of the sea can be particularly difficult to suppress due to its nature. Sea clutter has two properties that distinguish it from simpler forms of interference \cite{Ward2013, Rosenberg2017}:
@@ -58,7 +58,7 @@ Effective target detection depends on the suppression of noise and clutter. At s
     \label{fig:sea_surface}
 \end{figure}
 
-Most classical radar detectors are designed under the assumption that the clutter is Gaussian and homogeneous. This assumption is justified when each range cell contains many independent scatterers of similar strength, by the central limit theorem. Modern high-resolution radars, however, resolve patches of sea surface small enough that this no longer holds \cite{Mungara2024}. Compared with Gaussian clutter of the same average power, measured sea clutter produces large amplitudes far more often. It is instead well described by a K-distribution, which keeps a Gaussian model for the fast fluctuations of the ripples but allows each range cell to have its own power, set by the larger waves \cite{Ward1981, Ward2013}. This model is described in detail in Section~\ref{sec:clutter}.
+Most classical radar detectors are designed under the assumption that the clutter is Gaussian and homogeneous. This assumption is justified when each range cell contains many independent scatterers of similar strength, by the \gls{clt}. Modern high-resolution radars, however, resolve patches of sea surface small enough that this no longer holds \cite{Mungara2024}. Compared with Gaussian clutter of the same average power, measured sea clutter produces large amplitudes far more often. It is instead well described by a K-distribution, which keeps a Gaussian model for the fast fluctuations of the ripples but allows each range cell to have its own power, set by the larger waves \cite{Ward1981, Ward2013}. This model is described in detail in Section~\ref{sec:clutter}.
 
 \section{Problem Statement}\label{sec:problem_statement}
 Classical adaptive detectors such as the \gls{amf} \cite{Chen1991}, \gls{namf} \cite{Kraut1999}, and Kelly's \gls{glrt} \cite{Kelly1986} are all derived under the Gaussian and homogeneous clutter assumption. Since the clutter covariance is unknown in practice, these detectors estimate it from training data, (usually the range cells surrounding the \gls{cut}), which are assumed to share the same statistics as the \gls{cut}. In sea clutter, both assumptions are broken. As a result, performance of these detectors degrade and the important \gls{cfar} property is lost \cite{Rosenberg2017}.
@@ -148,7 +148,7 @@ A target at a given (angle, Doppler) produces at each (antenna, pulse) sample, a
 The matrix $\m S$ is therefore the signature of a target at angle $\theta$ and normalised Doppler $f_d$, as it would appear in the data with nothing else present. In practice, this signature is never observed in isolation. It is instead scaled by the target's unknown complex amplitude $\alpha$ and accompanied by unwanted interference (clutter and noise).
 
 \subsection{The Received Signal}
-The received signal for a single range gate is an $N\times M$ slice of the data cube 
+The received signal for a single range gate is an $N\times M$ slice of the data cube and is given by 
 \begin{equation}
     \m X = \alpha\m S + \m C + \m N,
 \end{equation} 
@@ -157,16 +157,18 @@ where $\m S=\vb s_\mathrm{sp} s_\mathrm{temp}^T$ is the target spatio-temporal s
     \vb x = \operatorname{vec}(\m X) = \alpha\,\vb s + \vb c + \vb n
     \label{eq:received_vec}
 \end{equation}
-where $\vb s = \operatorname{vec}(\m S)$ is the \emph{space-time steering vector}, $\vb c=\operatorname{vec}(\m C)$ and $\vb n=\operatorname{vec}(\m N)$. \\
+where $\vb s = \operatorname{vec}(\m S)$ is the \emph{space-time steering vector}, $\vb c=\operatorname{vec}(\m C)$ and $\vb n=\operatorname{vec}(\m N)$. 
 
 In vector form, all spatial, temporal and space-time correlations of the interference are captured by a single $L\times L$ covariance matrix, which allows standard vector detection theory to be applied. Whilst the target return and noise terms will be described in the subsections below, the whole of Section~\ref{sec:clutter} will be dedicated to the discussion of the K-distributed clutter model.
 
 \subsubsection{Target Return, $\alpha\vb s$}
+\label{sec:target_return}
 The target contributes the term $\alpha\vb s$, which separates the target return into a known \emph{shape} $\vb s$, and an unknown \emph{scale}, $\alpha$. This is the standard target model of adaptive detection \cite{Reed1974, Kelly1986, Chen1991} and of \gls{stap} \cite{Ward1994,Melvin2004}.
 
 The steering vector $\vb s$ fixes the shape of the target's signature set by its angle and Doppler, as seen in Equation \eqref{eq:steering_matrix} and is assumed to be known. The complex amplitude $\alpha=|\alpha|e^{j\psi}$ scales this signature equally at every antenna and pulse. This is under the assumption that the target does not fluctuate over the \gls{cpi}. Its magnitude depends on how strongly the target reflects and on its range, while its phase depends on the exact two-way path to the target to within a fraction of a wavelength. Neither can be predicted in practice, so $\alpha$ is treated as unknown, with its phase modelled as uniformly random \cite{Richards2005}. 
 
 \subsubsection{Noise Return, $\vb n$}
+\label{sec:noise_return}
 Noise in the radar return can be attributed mostly to thermal noise from receiver electronics. Thermal noise is generated independently in each receiver channel and on each pulse. It is modelled as a zero-mean, white complex Gaussian noise,
 \begin{equation}
     \vb n\sim\mc{CN}(\vb 0, \sigma^2\m I),
@@ -181,19 +183,31 @@ In a maritime context, clutter refers to the echoes off the surface of the sea. 
 \begin{equation}
     \vb c = \sqrt{\tau}\vb q.
 \end{equation}
-The \emph{speckle} $\vb q \sim \cal CN(\vb 0, \m G)$ is a zero-mean complex Gaussian vector that represents the fast, small-scale scattering from ripples.
-The \emph{texture} $\tau$ is a random variable that represents the local clutter power set by large-scale swell. 
-
-Thus, conditioned on the texture, the received clutter is distributed as
+The \emph{speckle} $\vb q \sim \cal CN(\vb 0, \m G)$ is a zero-mean complex Gaussian vector that represents the fast, small-scale scattering from ripples. The \emph{texture} $\tau\sim\Gamma(a, b)$ is a gamma-drawn random variable that represents the local clutter power set by large-scale swell. \\\\
+Thus, conditioned on the texture, the clutter is Gaussian, 
 \begin{equation}
     \vb c\mid\tau\sim\cal{CN}(\vb 0, \tau\m G)
 \end{equation}
+but averaging over the random texture, gives a heavier tailed, non-Gaussian distribution. When the texture is gamma distributed, $\tau\sim\Gamma(a, 1/a)$ with shape parameter $a$ and unit mean, the resultant amplitude $r=|c|$ of a single clutter sample with speckle power $P$ follows the K-distribution \cite{Ward2013}
+\begin{equation}
+    p(r) = \frac{4\,a^{\frac{a+1}{2}}\, r^{a}}{\Gamma(a)\,P^{\frac{a+1}{2}}}\,
+           K_{a-1}\!\left(2r\sqrt{\frac{a}{P}}\right), \qquad r\ge 0,
+    \label{eq:kdist}
+\end{equation}
+where $K_{a-1}(\cdot)$ is the modified Bessel function of the second kind. The shape parameter $a$ controls how spiky the clutter is. Small values ($a\lesssim 1$) produce very spiky clutter with a long tail, while as $a\to\infty$ the texture tends to a constant and the amplitude reverts to the Rayleigh distribution of the amplitude of Gaussian clutter. The K-distribution has been shown to be an accurate model for radar sea clutter over a wide range of conditions \cite{Ward2013}, and is the clutter model adopted in this thesis.
 
-The compound form of the K distribution has been shown \cite{Ward2006} to be an accurate statistical model for radar sea clutter at low grazing angles. 
+\subsection{Interference Covariance}
+Combining this clutter term with the target and noise return terms in Sections~\ref{sec:target_return}, ~\ref{sec:noise_return}, we can summarise the received vector with the distribution
+\begin{equation}
+    
+\end{equation}
+Then talk about interference covariance here?
 
-\subsubsection{Clutter Ridge and Brennan's Rule}
+\subsection{Melvin's Clutter Patch Model \cite{Melvin2004}}
+Provide a bit of context. We later use Melvin's clutter model as the basis of our K-distributed clutter generator simulation.
 
-\subsubsection{Melvin's Clutter Patch Model \cite{Melvin2004}}
+\subsection{Clutter Ridge and Brennan's Rule}
+We refer back to this section when we later look at clutter ridge in MVDR spectra.
 
 
 
@@ -219,7 +233,7 @@ A detector can make two fundamental kinds of error. A false-alarm declares a tar
 with the probability of missed detection $P_m=1-P_d$. Clearly, raising $\gamma$ lowers $P_{fa}$ but also lowers $P_d$, so they cannot be minimised simultaneously. Sweeping $\gamma$ traces the \gls{roc}, the curve of $P_d$ against $P_{fa}$, which characterises the detector independently of any single threshold.
 
 \subsection{The Neyman-Pearson Criterion and the GLRT}
-Since $P_d$ and $P_{fa}$ cannot both be made arbitrarily small, radar detection generally adopts the \acrfull{np} criterion \cite{Neyman1933}. The \gls{np} lemma states that the \acrfull{lrt} is the most powerful hypothesis test for distinguishing between two simple hypotheses at a given signicance level. 
+Since $P_d$ and $P_{fa}$ cannot both be made arbitrarily small, radar detection generally adopts the \acrfull{np} criterion \cite{Neyman1933}. The \gls{np} criterion in statistics states that the \acrfull{lrt} is the most powerful hypothesis test for distinguishing between two simple hypotheses at a given signicance level. 
 
 Under the \gls{np} criterion, the exact likelihood ratio or an approximation of the ratio forms the basis of most of the existing
 
