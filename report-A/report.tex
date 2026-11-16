@@ -19,7 +19,8 @@
 % Sections one size smaller than default
 \titleformat*{\section}{\normalfont\large\bfseries}
 \titleformat*{\subsection}{\normalfont\normalsize\bfseries}
-\titleformat*{\subsubsection}{\normalfont\normalsize\bfseries}
+\titleformat{\subsubsection}[runin]{\normalfont\normalsize\bfseries}{\thesubsubsection}{0.5em}{}[.]
+\titlespacing*{\subsubsection}{0pt}{1.5ex plus .5ex minus .2ex}{0.5em}
 \titlespacing*{\section}{0pt}{2ex plus 1ex minus .2ex}{1ex plus .2ex}
 \titlespacing*{\subsection}{0pt}{1.5ex plus 1ex minus .2ex}{0.8ex plus .2ex}
 
@@ -58,7 +59,7 @@ Effective target detection depends on the suppression of noise and clutter. At s
     \label{fig:sea_surface}
 \end{figure}
 
-Most classical radar detectors are designed under the assumption that the clutter is Gaussian and homogeneous. This assumption is justified when each range cell contains many independent scatterers of similar strength, by the \gls{clt}. Modern high-resolution radars, however, resolve patches of sea surface small enough that this no longer holds \cite{Mungara2024}. Compared with Gaussian clutter of the same average power, measured sea clutter produces large amplitudes far more often. It is instead well described by a K-distribution, which keeps a Gaussian model for the fast fluctuations of the ripples but allows each range cell to have its own power, set by the larger waves \cite{Ward1981, Ward2013}. This model is described in detail in Section~\ref{sec:clutter}.
+Most classical radar detectors are designed under the assumption that the clutter is Gaussian and homogeneous. This assumption is justified when each range cell contains many independent scatterers of similar strength, by the \gls{clt}. Modern high-resolution radars, however, resolve patches of sea surface small enough that this no longer holds \cite{Mungara2024}. Compared with Gaussian clutter of the same average power, measured sea clutter produces large amplitudes far more often. It is instead well described by a K-distribution, which keeps a Gaussian model for the fast fluctuations of the ripples but allows each range cell to have its own power, set by the larger waves \cite{Ward1981, Ward2013}. This model is described in detail in Section~\ref{sec:interference}.
 
 \section{Problem Statement}\label{sec:problem_statement}
 Classical adaptive detectors such as the \gls{amf} \cite{Chen1991}, \gls{namf} \cite{Kraut1999}, and Kelly's \gls{glrt} \cite{Kelly1986} are all derived under the Gaussian and homogeneous clutter assumption. Since the clutter covariance is unknown in practice, these detectors estimate it from training data, (usually the range cells surrounding the \gls{cut}), which are assumed to share the same statistics as the \gls{cut}. In sea clutter, both assumptions are broken. As a result, performance of these detectors degrade and the important \gls{cfar} property is lost \cite{Rosenberg2017}.
@@ -72,32 +73,40 @@ Practical detectors for heterogeneous clutter have been developed to reduce the 
 The aim of this thesis is to investigate a practical version of the optimum detector for K-distributed clutter, one that uses only the data available to a real radar, and to determine whether it maintains a constant false-alarm rate. The specific objectives are set out in Chapter~\ref{ch:objectives}, once the necessary background has been introduced.
 
 %% ------ Chapter: Background ----- %%
-\chapter{Background}\label{ch:background}
-The theory discussed in this section form the background required in the understanding of this thesis and is drawn from a review of the radar detection literature.
+\chapter{Background}
+\label{ch:background}
+This chapter introduces the background required in the understanding of this thesis and is drawn from a review of the target detection literature. Section~\ref{sec:stap} develops the space-time signal model of a multichannel airborne radar, ending with the received vector of a single range gate. Section~\ref{sec:interference} describes the statistical models of clutter and noise (interference) in that vector, and specifically the K-distributed clutter model. Section~\ref{sec:detection_theory} then formulates detection as a hypothesis test on this model, and Section~\ref{sec:current_detectors} reviews the existing detectors built on it.
 
 \section{Multichannel Space-Time Array Radar}
-Multichannel space-time array radar refers to radar systems that combine multiple spatial antenna channels with temporal pulse processing to filter out clutter and detect moving targets. The adaptive form of this processing in which the two-dimensional space-time filter response is dynamically adjusted in order to maximise output \gls{sinr} and consequently improve detection performance is also widely known as \gls{stap} \cite{Melvin2004}. 
+\label{sec:stap}
+Multichannel space-time array radar refers to radar systems that combine multiple spatial antenna channels with temporal pulse processing to filter out clutter and detect moving targets. The adaptive form of this processing, in which the two-dimensional space-time filter response is adjusted in order to maximise output \gls{sinr} is widely known as \gls{stap} \cite{Melvin2004}. 
 
-In a mono-static, pulsed radar with $N$ antenna elements, the antenna elements both transmit and receive. A \gls{t/r} switch exists to alternate each element between the two modes. On transmit, the elements act together as one aperture. Their phases are set so that the radiated waves add coherently in one direction, forming a single beam pointed at the region of interest. On receive, the elements act separately to produce $N$ simultaneous outputs or \emph{spatial samples}. This is possible when each element has its own receiver chain and digitiser, producing $N$ independent channels.
+In a mono-static, pulsed radar with $N$ antenna elements, the antenna elements both transmit and receive. A \gls{t/r} switch exists to alternate each element between the two modes. On transmit, the elements act together as one aperture. Their phases are set so that the radiated waves add coherently in one direction, forming a single beam pointed at the region of interest. On receive, the elements act separately to produce $N$ simultaneous outputs or \emph{spatial samples}. This is possible when each element has its own receiver chain and digitiser, producing $N$ independent channels.\\
+
+The remainder of this section describes how these channels, together with a train of pulses, are organised into data, and how a target appears in that data.
 
 \subsection{An Airborne Radar Signal Model}
 \label{sec:radar_signal_model}
 
 Consider an airborne radar with a side-looking linear array of $N$ antenna elements, with inter-element spacing $d$, travelling on a platform with velocity $v_p$, as shown in Figure~\ref{fig:airborne_radar_signal_model}. 
 
-\begin{figure}[t]
+\begin{figure}[h]
     \centering
-    \includegraphics[width=0.3\linewidth]{figs/airborne_radar_signal_model.png}
+    \includegraphics[width=0.35\linewidth]{figs/airborne_radar_signal_model.png}
     \caption{Airborne radar signal model}
     \label{fig:airborne_radar_signal_model}
 \end{figure}
 
-Suppose the radar transmits $M$ pulses at a pulse repetition frequency, $f_\mathrm{PRF}$, and that consecutive pulses are separated by the pulse repetition interval $T_r=1/f_\mathrm{PRF}$. For any pulse, which travels out and back at the speed of light $c$, an echo arriving at time $t$ after transmission must originate from a range $R=ct/2$. Hence, each \emph{fast-time} sample corresponds to a distinct range. These samples are called \emph{range-gates} (or range cells), and the radar collects $N_r$ of them spanning the observed range window, also shown in Figure~\ref{fig:airborne_radar_signal_model}.
+The radar transmits $M$ pulses at a pulse repetition frequency $f_\mathrm{PRF}$, such that consecutive pulses are separated by the pulse repetition interval $T_r=1/f_\mathrm{PRF}$. The $M$ pulses together span the \gls{cpi}, of duration $MT_r$.
 
-For each of the $N_r$ range gates, we obtain a $N\times M$ space-time grid; one per (antenna, pulse) pair. Stacking these across all range gates yields the $N\times M\times N_r$ data cube \cite{Melvin2004}. Detection is then carried out one range gate at a time, with the gate currently being tested for a target called the \acrfull{cut}.
+For any pulse, which travels out and back at the speed of light $c$, an echo arriving at time $t$ after transmission must originate from a range $R=ct/2$. Each sample of the echo therefore corresponds to a distinct range. These samples are called \emph{range gates} (or range cells), and the radar collects $N_r$ of them spanning the observed range window, also shown in Figure~\ref{fig:airborne_radar_signal_model}.
+
+For each of the $N_r$ range gates, an $N\times M$ space-time grid of samples is obtained, one per (antenna, pulse) pair. Stacking these grids across all range gates gives the $N\times M\times N_r$ data cube \cite{Melvin2004}. Detection is then carried out one range gate at a time, with the gate currently being tested for a target called the \acrfull{cut}.\\
+
+Target detection is possible because a target present in the \gls{cut} leaves a characteristic signature across this $N\times M$ grid of samples. To understand the form of this signature, the spatial and temporal dimensions are considered separately below.
 
 \subsubsection{Dimension 1: Space ($N$ Antennas Encode Angle)}
-A plane wave arriving from an angle $\theta$ (relative to the broadside) arrives at each of the $N$ antennas one after another. Between each adjacent antenna in the linear array, an additional path length of $d\sin\theta$ is traversed. A simple derivation is depicted in Figure~\ref{fig:path_diff}.
+A plane wave arriving from an angle $\theta$ (from the broadside) arrives at each of the $N$ antennas one after another. Between each adjacent antenna in the linear array, an additional path length of $d\sin\theta$ is traversed. A simple derivation is depicted in Figure~\ref{fig:path_diff}.
 
 \begin{figure}[h]
     \centering
@@ -106,21 +115,23 @@ A plane wave arriving from an angle $\theta$ (relative to the broadside) arrives
     \label{fig:path_diff}
 \end{figure}
 
-For a narrowband signal of wavelength $\lambda$\footnote{The transmitted pulse is generally a burst of a sinusoidal carrier of frequency $f_c=c/\lambda$, so a delay $\tau$ shifts its phase by $2\pi f_c\tau$. Under the narrowband assumption the delay across the array is small compared with the pulse duration, so only this phase shift is significant.}, a path difference of one wavelength corresponds to a phase change of $2\pi$. Hence, a path difference of $d\sin\theta$ between adjacent antennas constitutes a phase shift of 
+% For a narrowband signal of wavelength $\lambda$\footnote{The transmitted pulse is generally a burst of a sinusoidal carrier of frequency $f_c=c/\lambda$, so a delay $\tau$ shifts its phase by $2\pi f_c\tau$. Under the narrowband assumption the delay across the array is small compared with the pulse duration, so only this phase shift is significant.}, a path difference of one wavelength corresponds to a phase change of $2\pi$. Hence, a path difference of $d\sin\theta$ between adjacent antennas constitutes a phase shift of 
+
+For a narrowband signal of wavelength $\lambda$, a path difference of one wavelength corresponds to a phase change of $2\pi$. Hence, a path difference of $d\sin\theta$ between adjacent antennas constitutes a phase shift of 
 \begin{equation}
-    \Delta\phi=2\pi\frac{d}{\lambda}\sin\theta=2\pi f_s,
+    \Delta\phi=2\pi\frac{d\sin\theta}{\lambda}=2\pi f_s,
 \end{equation} 
 where $f_s$ is the \emph{normalised spatial frequency} given by
 \begin{equation}
     f_s=\frac{d}{\lambda}\sin\theta.
     \label{eq:f_s}
 \end{equation} 
-Hence, for each antenna across the array, the phase increases linearly, which is described by the \emph{spatial steering vector}
+Hence, the phase increases linearly across the array, which is described by the \emph{spatial steering vector}
 \begin{equation}
-    \vb s_\text{sp} = \left[1\quad e^{j2\pi f_s}\quad\cdots\quad e^{j2\pi(N-1)f_s}\right]^T
+    \vb s_\text{sp} = \left[1\quad e^{j2\pi f_s}\quad\cdots\quad e^{j2\pi(N-1)f_s}\right]^T,
     \label{eq:s_sp}
 \end{equation} 
-where the first antenna is taken as an arbitrary reference.
+where the first antenna is taken as the reference.
 
 \subsubsection{Dimension 2: Time ($M$ Pulses Encode Doppler)}
 Let $v_r$ be the radial velocity of the target relative to the moving platform. Then between successive pulses (spaced by the pulse repetition interval $T_r=1/f_\mathrm{PRF}$), a moving target changes its range by $\Delta R=v_rT_r$. As each pulse travels to the target and back, the round-trip path changes by $2\Delta R$, which for a wavelength $\lambda$ constitutes a phase shift of
@@ -132,53 +143,61 @@ where $f_d$ is the \emph{normalised Doppler frequency} given by
 \begin{equation}
     f_d=\frac{2v_rT_r}{\lambda}=\frac{2v_r}{\lambda f_\mathrm{PRF}}.
     \label{eq:f_d}
-\end{equation} As in the spatial case, for each consecutive pulse across the $M$ pulses, the phase increases linearly, which is described by the \emph{temporal steering vector}
+\end{equation} As in the spatial case, the phase increases linearly from one pulse to the next, which is described by the \emph{temporal steering vector}
 \begin{equation}
     \vb s_\text{temp} = \left[1 \quad e^{j2\pi f_d} \quad \cdots \quad e^{j2\pi(M-1)f_d}\right]^T.
     \label{eq:s_temp}
 \end{equation}
-Note that only radial movement of the target is considered since any tangential motion does not contribute to a change in range and hence has no Doppler effect.
+Note that only radial motion of the target is considered since any tangential motion does not contribute to a change in range and hence has no Doppler effect.
 
-\subsubsection{Combining Both Dimensions: Space-Time Snapshot}
-A target at a given (angle, Doppler) produces at each (antenna, pulse) sample, a phase that is the sum of its spatial phase (from the angle) and its temporal phase (from the Doppler), with respect to an arbitrary reference origin. The two phases add and thus the corresponding complex factors in the steering vectors \eqref{eq:s_sp}, \eqref{eq:s_temp} multiply; the sample at antenna $n$, pulse $m$ carries $(\vb s_\mathrm{sp})_n(\vb s_\mathrm{temp})_m$. Collecting over all $(n, m)$ pairs gives the $N\times M$ \emph{space-time steering matrix} which is also given by the outer product
+\subsubsection{Combining Both Dimensions (Space-Time)}
+At antenna $n$ and pulse $m$, a target at a given angle and Doppler produces a phase that is the sum of its spatial phase and its temporal phase, with respect to the reference origin. The two phases add and thus the corresponding complex factors in the steering vectors \eqref{eq:s_sp}, \eqref{eq:s_temp} multiply, so the sample at antenna $n$, pulse $m$ is $(\vb s_\mathrm{sp})_n(\vb s_\mathrm{temp})_m$. Collecting over all $(n, m)$ pairs gives the $N\times M$ \emph{space-time steering matrix} which can be written as the outer product
 \begin{equation}
     \m S=\vb s_\mathrm{sp} \vb s_\mathrm{temp}^T.
     \label{eq:steering_matrix}
 \end{equation}
-The matrix $\m S$ is therefore the signature of a target at angle $\theta$ and normalised Doppler $f_d$, as it would appear in the data with nothing else present. In practice, this signature is never observed in isolation. It is instead scaled by the target's unknown complex amplitude $\alpha$ and accompanied by unwanted interference (clutter and noise).
+The matrix $\m S$ is therefore the signature of a target at angle $\theta$ and normalised Doppler $f_d$, as it would appear in the data with nothing else present. In practice, this signature is never observed in isolation. It is instead scaled by the target's unknown complex amplitude $\alpha$ and accompanied by unwanted interference (clutter and noise). This non-ideal received signal is discussed next.
 
-\subsection{The Received Signal}
-The received signal for a single range gate is an $N\times M$ slice of the data cube and is given by 
+\subsection{The Received Signal}\label{sec:received_signal}
+The received signal for a single range gate is an $N\times M$ slice of the data cube, given by
 \begin{equation}
     \m X = \alpha\m S + \m C + \m N,
-\end{equation} 
-where $\m S=\vb s_\mathrm{sp} s_\mathrm{temp}^T$ is the target spatio-temporal steering matrix from \eqref{eq:steering_matrix}, $\m C$ is the clutter return, $\m N$ is the thermal noise and $\alpha$ is the complex target amplitude. Vectorising by stacking the columns gives received vector of length $L=NM$
+    \label{eq:received_mat}
+\end{equation}
+where $\m S$ is the space-time steering matrix in \eqref{eq:steering_matrix}, $\alpha$ is the complex target amplitude, $\m C$ is the clutter return and $\m N$ is the thermal noise. Vectorising by stacking the columns of each matrix, gives the received vector of length $L=NM$,
 \begin{equation}
-    \vb x = \operatorname{vec}(\m X) = \alpha\,\vb s + \vb c + \vb n
+    \vb x = \operatorname{vec}(\m X) = \alpha\,\vb s + \vb c + \vb n,
     \label{eq:received_vec}
 \end{equation}
-where $\vb s = \operatorname{vec}(\m S)$ is the \emph{space-time steering vector}, $\vb c=\operatorname{vec}(\m C)$ and $\vb n=\operatorname{vec}(\m N)$. 
+where $\vb c=\operatorname{vec}(\m C)$, $\vb n=\operatorname{vec}(\m N)$, and
+\begin{equation}
+    \vb s = \operatorname{vec}(\m S) = \operatorname{vec}\big(\vb s_\mathrm{sp}\vb s_\mathrm{temp}^T\big) = \vb s_\mathrm{temp}\otimes\vb s_\mathrm{sp}
+    \label{eq:s}
+\end{equation}
+is the \emph{space-time steering vector}, with $\otimes$ denoting the Kronecker product. The clutter and noise together form the \emph{interference} which is denoted $\vv\varsigma = \vb c + \vb n$. 
 
-In vector form, all spatial, temporal and space-time correlations of the interference are captured by a single $L\times L$ covariance matrix, which allows standard vector detection theory to be applied. Whilst the target return and noise terms will be described in the subsections below, the whole of Section~\ref{sec:clutter} will be dedicated to the discussion of the K-distributed clutter model.
+% In vector form, all spatial, temporal and space-time correlations of the interference are captured by a single $L\times L$ covariance matrix, which allows standard vector detection theory to be applied. 
 
-\subsubsection{Target Return, $\alpha\vb s$}
+The target return, $\alpha\vb s$, is described below, while the interference terms are the subject of Section~\ref{sec:interference}.
+
+\subsubsection{Target Return}
 \label{sec:target_return}
-The target contributes the term $\alpha\vb s$, which separates the target return into a known \emph{shape} $\vb s$, and an unknown \emph{scale}, $\alpha$. This is the standard target model of adaptive detection \cite{Reed1974, Kelly1986, Chen1991} and of \gls{stap} \cite{Ward1994,Melvin2004}.
+The target return separates into a known \emph{shape} $\vb s$, and an unknown \emph{scale}, $\alpha$. This is the standard target model of adaptive detection \cite{Reed1974, Kelly1986, Chen1991} and of \gls{stap} \cite{Ward1994,Melvin2004}. The steering vector $\vb s$ fixes the shape of the target's signature set by its angle and Doppler, as seen in Equation \eqref{eq:steering_matrix} and is assumed to be known. The complex amplitude $\alpha=|\alpha|e^{j\psi}$ scales this signature equally at every antenna and pulse. Its magnitude depends on how strongly the target reflects and on its range, while its phase depends on the exact two-way path to the target to within a fraction of a wavelength. Neither can be predicted in practice, so $\alpha$ is treated as unknown, with its phase modelled as uniformly random \cite{Richards2005}. The target is also assumed not to fluctuate over the \gls{cpi}, so that $\alpha$ is constant across the $M$ pulses.
 
-The steering vector $\vb s$ fixes the shape of the target's signature set by its angle and Doppler, as seen in Equation \eqref{eq:steering_matrix} and is assumed to be known. The complex amplitude $\alpha=|\alpha|e^{j\psi}$ scales this signature equally at every antenna and pulse. This is under the assumption that the target does not fluctuate over the \gls{cpi}. Its magnitude depends on how strongly the target reflects and on its range, while its phase depends on the exact two-way path to the target to within a fraction of a wavelength. Neither can be predicted in practice, so $\alpha$ is treated as unknown, with its phase modelled as uniformly random \cite{Richards2005}. 
+\newpage
+\section{Interference Model}
+\label{sec:interference}
+The interference in \eqref{eq:received_vec} is $\vv\varsigma=\vb c + \vb n$; the sum of clutter and noise. The noise distribution is firstly described in Section~\ref{sec:noise_return}. The clutter distribution is then described in two parts: where it lies in angle and Doppler (Section~\ref{sec:clutter_ridge}) which determines its covariance matrix, and how its amplitude fluctuates, leading to the K-distributed clutter model (Section ). These two are combined and 
 
-\subsubsection{Noise Return, $\vb n$}
+\subsection{Noise Return}
 \label{sec:noise_return}
 Noise in the radar return can be attributed mostly to thermal noise from receiver electronics. Thermal noise is generated independently in each receiver channel and on each pulse. It is modelled as a zero-mean, white complex Gaussian noise,
 \begin{equation}
     \vb n\sim\mc{CN}(\vb 0, \sigma^2\m I),
 \end{equation}
-where $\sigma^2$ is the noise power, and is independent of the clutter. The covariance is $\sigma^2\m I$ because the noise in different channels and on different pulses is uncorrelated, so all off-diagonal entries are zero, and every channel has the same noise power $\sigma^2$, so all diagonal entries are equal.
+where $\sigma^2$ is the noise power, and is independent of the clutter. The covariance is $\sigma^2\m I$ because the noise in different channels and on different pulses is uncorrelated, so all off-diagonal entries are zero, and every channel has the same noise power $\sigma^2$, so all diagonal entries are equal. The noise therefore has no structure in angle and Doppler, and the same statistics in every range gate.
 
-\section{The K-distributed Clutter Model}
-\label{sec:clutter}
-
-\subsection{Clutter Return, $\vb c$}
+\subsection{K-distributed Clutter Return}
 In a maritime context, clutter refers to the echoes off the surface of the sea. Sea clutter observed by high-resolution radars, particularly at low and medium grazing angles, depart from the classical Gaussian and homogeneous assumption in two ways \cite{Ward2013, Rosenberg2017}; its non-Gaussian and heterogeneous nature. Both effects are captured by the compound-Gaussian model \cite{Ward1981, Ward2013}, where
 \begin{equation}
     \vb c = \sqrt{\tau}\vb q.
@@ -196,24 +215,79 @@ but averaging over the random texture, gives a heavier tailed, non-Gaussian dist
 \end{equation}
 where $K_{a-1}(\cdot)$ is the modified Bessel function of the second kind. The shape parameter $a$ controls how spiky the clutter is. Small values ($a\lesssim 1$) produce very spiky clutter with a long tail, while as $a\to\infty$ the texture tends to a constant and the amplitude reverts to the Rayleigh distribution of the amplitude of Gaussian clutter. The K-distribution has been shown to be an accurate model for radar sea clutter over a wide range of conditions \cite{Ward2013}, and is the clutter model adopted in this thesis.
 
-\subsection{Interference Covariance}
-Combining this clutter term with the target and noise return terms in Sections~\ref{sec:target_return}, ~\ref{sec:noise_return}, we can summarise the received vector with the distribution
+\subsection{Interference Covariance and Summary}
+Since the speckle and the noise are both zero mean and independent, the interference $\vv\varsigma=\vb c+\vb n$ is also zero mean, and conditioned on the texture its covariance matrix is
 \begin{equation}
-    
+    \m R = \bb E\!\left[\vv\varsigma\vv\varsigma^H \mid \tau\right] = \tau\m G + \sigma^2\m I.
+    \label{eq:R}
 \end{equation}
-Then talk about interference covariance here?
+This $L\times L$ matrix holds every spatial, temporal and space-time correlation of the interference, including the clutter ridge. Two of its features drive the rest of this work. First, neither $\m G$ nor $\tau$ is known in practice, so they must be estimated from the data. Second, because the texture changes from one range gate to the next, so does $\m R$, which complicates estimating it from neighbouring range gates.
+
+Combining the three terms of \eqref{eq:received_vec}, the received vector is complex Gaussian conditioned on the texture,
+\begin{equation}
+    \vb x\mid\tau \sim \mc{CN}\big(\alpha\vb s,\; \tau\m G + \sigma^2\m I\big),
+    \label{eq:x_given_tau}
+\end{equation}
+with $\alpha=0$ when no target is present. The complete model is summarised in Table~\ref{tab:signal_model}, and is the basis of the detection problem formulated in the next section.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Summary of the received vector model $\vb x = \alpha\vb s + \vb c + \vb n$.}
+    \label{tab:signal_model}
+    \renewcommand{\arraystretch}{1.6}
+    \begin{tabular}{@{}l l l@{}}
+        \hline
+        Term & Model & Known / unknown \\
+        \hline
+        Steering vector, $\vb s$ & $\vb s=\operatorname{vec}\big(\vb s_\mathrm{sp}\vb s_\mathrm{temp}^T\big)=\vb s_\mathrm{temp}\otimes\vb s_\mathrm{sp}$ & Known \\
+        Target, $\alpha\vb s$ & Deterministic; $\alpha=0$ under $H_0$ & $\alpha$ unknown \\
+        Clutter, $\vb c$ & $\vb c=\sqrt{\tau}\,\vb q$, \quad $\vb q\sim\mc{CN}(\vb 0,\m G)$, \quad $\tau\sim\Gamma(a,1/a)$ & $\m G$, $\tau$, $a$ unknown \\
+        Noise, $\vb n$ & $\vb n\sim\mc{CN}(\vb 0,\sigma^2\m I)$ & $\sigma^2$ unknown \\
+        \hline
+        Received, $\vb x\mid\tau$ & $\mc{CN}\big(\alpha\vb s,\; \tau\m G+\sigma^2\m I\big)$ & \\
+        \hline
+    \end{tabular}
+\end{table}
 
 \subsection{Melvin's Clutter Patch Model \cite{Melvin2004}}
+\label{sec:melvins_model}
 Provide a bit of context. We later use Melvin's clutter model as the basis of our K-distributed clutter generator simulation.
 
 \subsection{Clutter Ridge and Brennan's Rule}
-We refer back to this section when we later look at clutter ridge in MVDR spectra.
+\label{sec:clutter_ridge}
+While the texture sets the clutter \emph{power}, the speckle covariance $\m G$ sets its \emph{structure} in angle and Doppler. The clutter in a range gate is the echo from a ring of sea surface at that range, arriving from all angles $\theta$, and $\m G$ can be built up from the space-time signatures of patches around this ring \cite{Melvin2004}, as is done in the simulator of Section~\ref{sec:simulator}. Although the sea surface is, to first order, stationary, the platform is not. Clutter at angle $\theta$ therefore has radial velocity $v_r=v_p\sin\theta$ relative to the platform, so from \eqref{eq:f_s} and \eqref{eq:f_d} its normalised Doppler frequency is
+\begin{equation}
+    f_d(\theta) = \frac{2v_pT_r}{\lambda}\sin\theta = \beta\, f_s(\theta),
+    \qquad \beta = \frac{2v_pT_r}{d}.
+    \label{eq:clutter_ridge}
+\end{equation}
+The Doppler frequency of the clutter is tied to its angle, so the clutter occupies a straight line of slope $\beta$ in the angle-Doppler plane, known as the \emph{clutter ridge} (Figure~\ref{fig:clutter_ridge}). The ridge is seen again in the \gls{mvdr} spectra of the simulated clutter in Section~\ref{sec:simulator}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\linewidth]{figs/clutter_ridge.png}
+    \caption{The clutter ridge in the angle-Doppler plane. Stationary clutter lies on the line $f_d=\beta f_s$, while a moving target generally lies off it.}
+    \label{fig:clutter_ridge}
+\end{figure}
+
+A moving target has a radial velocity of its own, so it generally lies off the ridge, even when it shares the angle or the Doppler frequency of some clutter. This is the fundamental reason for processing space and time jointly: a space-time filter can suppress the entire ridge while passing the target. Because the clutter is confined to the ridge, it also occupies only a low-dimensional subspace of the $L$-dimensional space-time space, with rank given approximately by Brennan's rule \cite{Melvin2004},
+\begin{equation}
+    \operatorname{rank}(\m G)\approx N+\beta(M-1),
+    \label{eq:brennan}
+\end{equation}
+which is typically much smaller than $L$.
+
+
+
+
+
 
 
 
 
 \newpage
 \section{Detection Theory}
+\label{sec:detection_theory}
 \subsection{Hypothesis Testing $H_0/H_1$}
 The target detection problem is commonly formulated as a binary hypothesis test as in \cite{Melvin2004}, \cite{Aboutanios2020}. We define the null hypothesis, $H_0$ to be that the target is not present and the alternative hypothesis $H_1$, being that the target is present. For the \gls{cut}, the two hypotheses correspond to the received vector
 \begin{align}
@@ -225,7 +299,7 @@ $$y\;\underset{H_0}{\overset{H_1}{\gtrless}}\; \gamma,$$
 so that $H_1$ is declared (a detection) when $y\geq\gamma$ and $H_0$ otherwise. Designing a detector means choosing how the test statistic $y$ is formed from $\vb x$; that is, choosing the function $T:\bb C^{L}\mapsto \bb R$, where $y=T(\vb x)$. The threshold $\gamma$ then sets the operating point.
 
 \subsubsection{Detection and False-Alarm Probabilities}
-A detector can make two fundamental kinds of error. A false-alarm declares a target when none is present, and a missed detection fails to declare a target that is present. Performance can therefore be summarised by two fundamental statistical measures: the probability of false alarm and the probability of detection,
+A detector can make two main kinds of error. A false-alarm declares a target when none is present, and a missed detection fails to declare a target that is present. Performance can therefore be summarised by two fundamental statistical measures: the probability of false alarm and the probability of detection,
 \begin{align}
     P_{fa} &= P(y\ge\gamma\mid H_0), \nonumber\\
     P_{d}  &= P(y\ge\gamma\mid H_1), \nonumber
@@ -233,22 +307,159 @@ A detector can make two fundamental kinds of error. A false-alarm declares a tar
 with the probability of missed detection $P_m=1-P_d$. Clearly, raising $\gamma$ lowers $P_{fa}$ but also lowers $P_d$, so they cannot be minimised simultaneously. Sweeping $\gamma$ traces the \gls{roc}, the curve of $P_d$ against $P_{fa}$, which characterises the detector independently of any single threshold.
 
 \subsection{The Neyman-Pearson Criterion and the GLRT}
-Since $P_d$ and $P_{fa}$ cannot both be made arbitrarily small, radar detection generally adopts the \acrfull{np} criterion \cite{Neyman1933}. The \gls{np} criterion in statistics states that the \acrfull{lrt} is the most powerful hypothesis test for distinguishing between two simple hypotheses at a given signicance level. 
-
-Under the \gls{np} criterion, the exact likelihood ratio or an approximation of the ratio forms the basis of most of the existing
-
-
-
-The Neyman-Pearson Lemma states that the likelihood ratio test (LRT) is the most powerful hypothesis test for distinguishing between two simple hypotheses at a given significance level α
+Since $P_d$ and $P_{fa}$ cannot both be made arbitrarily small, radar detection generally adopts the \acrfull{np} criterion \cite{Neyman1933}. The \gls{np} criterion in statistics states that the \acrfull{lrt} is the most powerful hypothesis test for distinguishing between two simple hypotheses at a given signicance level. In this context, for a fixed false-alarm rate $P_{fa}$, the \gls{lrt},
+\begin{equation}
+    y=\frac{f_{\vb x}(\vb x\mid H_1)}{f_{\vb x}(\vb x\mid H_0)}\;\underset{H_0}{\overset{H_1}{\gtrless}}\; \gamma,
+    \label{eq:lrt}
+\end{equation}
+is the test that achieves the maximum probability of detection $P_d$ is the \gls{lrt}, where the threshold $\gamma$ is chosen for a $P_{fa}$ deemed allowable. The \gls{lrt} is the optimum detector when both probability densities are known. In practice however, both probability densities depend on the interference statistics which are unknown. The \acrfull{glrt} is the standard method used instead, in which each unknown parameter is replaced by its \gls{mle} \cite{Kay1998}. The \gls{glrt} forms the basis of most of the existing adaptive detectors \cite{Kelly1986, Chen1991, Kraut1999} which is reviewed in the next section.
 
 \subsection{Constant False Alarm Rate (CFAR)}
+\label{sec:cfar}
+For the threshold $\gamma$ to deliver the design value $P_{fa}=\alpha_{fa}$, the distribution of the test statistic under $H_0$ must be known. A detector is said to have the \gls{cfar} property if this distribution does not depend on the unknown interference parameters, such as the clutter power or covariance. A single threshold can then be set in advance and holds the false-alarm rate constant across the scene. Without the \gls{cfar} property, the false-alarm rate rises wherever the clutter is stronger than expected, overloading the radar operator or tracker with false targets, or the threshold must be set conservatively and weak targets are missed.
 
+\newpage
 \section{Current Detectors}
+\label{sec:current_detectors}
+
 \subsection{Gaussian Adaptive Detectors}
+\label{sec:gaussian_detectors}
+The \gls{wmf} in \eqref{eq:wmf} requires the interference covariance $\m R$, which is unknown in practice. The Gaussian adaptive detectors replace it with an estimate formed from $K$ \emph{training} range gates $\vb z_1,\dots,\vb z_K$ surrounding the \gls{cut}. The \gls{cut} itself, and the guard cells immediately next to it, are excluded, since any target energy in the training data would be treated as interference and nulled. If the training gates are Gaussian, and independent and identically distributed with the \gls{cut}, the \gls{mle} of $\m R$ is the \gls{scm}
+\begin{equation}
+    \hat{\m R} = \frac{1}{K}\sum_{k=1}^{K}\vb z_k\vb z_k^H,
+    \label{eq:scm}
+\end{equation}
+which is invertible only if $K\ge L$. Replacing $\m R$ with $\hat{\m R}$ costs performance. Reed, Mallett and Brennan showed that the output \gls{sinr} of the adaptive filter, relative to that of the optimum filter, has mean $(K-L+2)/(K+1)$, so that about $K\approx 2L$ homogeneous training gates are needed to keep the average loss within 3\,dB \cite{Reed1974}. For a modest array of $N=8$ elements and $M=16$ pulses, $L=128$, and around 256 training gates with identical statistics are required.
+
+Three well-known detectors are obtained from the \gls{glrt} in this setting, and are summarised in Table~\ref{tab:gaussian_detectors}. The \gls{amf} \cite{Chen1991} is a two-step \gls{glrt}: the \gls{wmf} is derived assuming $\m R$ is known, and the \gls{scm} is then substituted. Kelly's \gls{glrt} \cite{Kelly1986} treats the \gls{cut} and the training data jointly in a single step. The \gls{namf} \cite{Kraut1999} additionally normalises by the whitened power of the \gls{cut}, $\vb x^H\hat{\m R}^{-1}\vb x$, which makes it invariant to scaling of the \gls{cut} and therefore \gls{cfar} with respect to its power.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Gaussian adaptive detectors. Each statistic is compared with a threshold $\gamma$.}
+    \label{tab:gaussian_detectors}
+    \renewcommand{\arraystretch}{2.2}
+    \begin{tabular}{@{}l c@{}}
+        \hline
+        Detector & Test statistic \\
+        \hline
+        \gls{amf} \cite{Chen1991} & $\dfrac{|\vb s^H\hat{\m R}^{-1}\vb x|^2}{\vb s^H\hat{\m R}^{-1}\vb s}$ \\
+        Kelly's \gls{glrt} \cite{Kelly1986} & $\dfrac{|\vb s^H\hat{\m R}^{-1}\vb x|^2}{(\vb s^H\hat{\m R}^{-1}\vb s)(K+\vb x^H\hat{\m R}^{-1}\vb x)}$ \\
+        \gls{namf} \cite{Kraut1999} & $\dfrac{|\vb s^H\hat{\m R}^{-1}\vb x|^2}{(\vb s^H\hat{\m R}^{-1}\vb s)(\vb x^H\hat{\m R}^{-1}\vb x)}$ \\
+        \hline
+    \end{tabular}
+\end{table}
+
+All three detectors are \gls{cfar} when the clutter is Gaussian and homogeneous. In K-distributed clutter, however, each training gate has its own texture $\tau_k$, so the expected value of the \gls{scm} is
+\begin{equation}
+    \bb E\big[\hat{\m R}\big] = \bar\tau\m G + \sigma^2\m I,
+    \qquad \bar\tau = \frac{1}{K}\sum_{k=1}^{K}\tau_k,
+\end{equation}
+which reflects the \emph{average} clutter power over the training gates rather than the texture of the \gls{cut}. A single spiky training gate can dominate the sum. The \gls{amf} and Kelly's \gls{glrt} therefore lose the \gls{cfar} property, and all three detectors lose detection performance, since none of them exploits the compound-Gaussian structure of the clutter \cite{Gini1998, Rosenberg2017}.
+
 \subsection{Compound-Gaussian Adaptive Detectors}
-\subsection{Practical Approaches in Heterogenous Clutter}
+\label{sec:okd}
+When the clutter is modelled as compound-Gaussian, the \gls{lrt} in \eqref{eq:lrt} can be evaluated by first conditioning on the texture of the \gls{cut} and then averaging over its distribution $f_\tau$. Replacing the unknown target amplitude with its \gls{mle} gives the \gls{okd} of Gini \textit{et al.} \cite{Gini1998},
+\begin{equation}
+    \Lambda_\text{OKD}(\vb x) = \frac{h_L(q_1)}{h_L(q_0)} \;\underset{H_0}{\overset{H_1}{\gtrless}}\; \gamma,
+    \qquad
+    h_L(q) = \int_0^\infty \tau^{-L} e^{-q/\tau} f_\tau(\tau)\,\di\tau,
+    \label{eq:okd}
+\end{equation}
+where the quadratic forms
+\begin{equation}
+    q_0 = \vb x^H\m G^{-1}\vb x,
+    \qquad
+    q_1 = q_0 - \frac{|\vb s^H\m G^{-1}\vb x|^2}{\vb s^H\m G^{-1}\vb s}
+    \label{eq:q0q1}
+\end{equation}
+are the whitened power of the \gls{cut}, and the whitened power remaining once the best-fitting target along $\vb s$ is removed. For gamma distributed texture and negligible noise, $h_L(q)$ has the closed form
+\begin{equation}
+    h_L(q) \propto q^{\frac{a-L}{2}}\,K_{L-a}\big(2\sqrt{aq}\big),
+\end{equation}
+where $K_{L-a}(\cdot)$ is again the modified Bessel function of the second kind. When thermal noise is included, $\m R=\tau\m G+\sigma^2\m I$ and no closed form exists, so the integral in \eqref{eq:okd} must be evaluated numerically.
 
+By the \gls{np} lemma, the \gls{okd} gives the best possible detection performance in K-distributed clutter, and it is the natural benchmark for any detector in this setting. However, it is \emph{clairvoyant}: it requires the speckle covariance $\m G$ and the texture distribution $f_\tau$, including the shape parameter $a$, to be known exactly. Neither is known in practice.
 
+Detectors that avoid the need for the texture distribution have therefore been developed. Conte, Lops and Ricci \cite{Conte1995} showed that, as $L$ grows, the optimum detector in compound-Gaussian clutter approaches the \gls{nmf}
+\begin{equation}
+    y_\text{NMF} = \frac{|\vb s^H\m G^{-1}\vb x|^2}{(\vb s^H\m G^{-1}\vb s)(\vb x^H\m G^{-1}\vb x)}
+    \;\underset{H_0}{\overset{H_1}{\gtrless}}\; \gamma,
+    \label{eq:nmf}
+\end{equation}
+whatever the texture distribution. The same statistic is obtained from the \gls{glrt} when the texture of the \gls{cut} is treated as an unknown deterministic parameter. Since the texture of the \gls{cut} cancels between the numerator and the denominator, the \gls{nmf} is \gls{cfar} with respect to the texture, and it has the same form as the \gls{namf} with $\m G$ in place of $\hat{\m R}$. Its price is that it ignores the texture distribution, which the \gls{okd} exploits. Sangston, Gini and Greco \cite{Sangston2012} compared the optimum detector with such texture-independent detectors across a range of heavy-tailed compound-Gaussian models, quantifying how much performance is given up by not using the texture distribution.
+
+To make these detectors adaptive, the speckle covariance must be estimated from training data whose textures also vary. Only the product $\tau\m G$ is identifiable from the data, so $\tau$ and $\m G$ can be separated only up to a scale factor, which is fixed by convention, for example by setting $\bb E[\tau]=1$. Covariance estimators designed for compound-Gaussian clutter therefore normalise each training gate by its own power. The \gls{nscm} does this in a single step \cite{Conte1998}, and the iterative fixed-point estimator, which is the \gls{mle} when the textures are treated as unknown constants, refines it \cite{Gini2002}. Both are invariant to the training textures, but this invariance is broken by thermal noise, since $\tau_k\m G+\sigma^2\m I$ is no longer a scaled version of a single matrix.
+
+\subsection{Practical Approaches in Heterogeneous Clutter}
+\label{sec:practical}
+Several practical detectors have been developed to reduce the dependence on large amounts of homogeneous training data. The first three below are derived under a Gaussian model, while the \gls{ten} method, described in more detail in Section~\ref{sec:ten}, is designed specifically for K-distributed clutter.
+\begin{itemize}
+    \item \textbf{Single data set detectors} \cite{Aboutanios2005, Aboutanios2019} estimate the interference covariance from the \gls{cut} alone, by forming multiple lower-dimensional snapshots from sub-windows of the \gls{cut} in space and time. No training data is required, so heterogeneity across range gates has no effect, at the cost of a reduced number of degrees of freedom.
+    \item \textbf{Hybrid detectors} \cite{Aboutanios2010} combine the single data set estimate from the \gls{cut} with an estimate from the training data, screening out training gates whose statistics are unlike those of the \gls{cut}. Both of these approaches improve on the Gaussian detectors, but they are derived under a Gaussian model, so the variation of the texture appears to them simply as a variation in power.
+    \item \textbf{Reduced-rank detectors} \cite{Klemm2002} exploit the low rank of the clutter given by Brennan's rule \eqref{eq:brennan}, adapting only within the clutter subspace. This reduces the number of training gates required to a multiple of the clutter rank rather than of $L$.
+\end{itemize}
+
+\subsubsection{The Texture Estimation and Normalisation (TEN) Method}\label{sec:ten}
+The \gls{ten} method of Aboutanios and Rosenberg \cite{Aboutanios2020} is a practical, adaptive detector for K-distributed clutter. Its idea is to estimate the texture of every training gate relative to that of the \gls{cut} and to normalise it out, restoring homogeneity across range so that \emph{all} the training data can be used to estimate the covariance for an \gls{amf}-type statistic.
+
+\paragraph{Model.} Thermal noise is neglected, so that the $k$th training gate obeys $\vb z_k\sim\mc{CN}(\vb 0,\tau_k\m G)$ and the \gls{cut} obeys $\vb x\sim\mc{CN}(\vb 0,\tau_0\m G)$ under $H_0$, where the textures $\tau_0$ and $\tau_k$ are independent and gamma distributed. The heterogeneity is therefore confined to the texture, and the speckle covariance $\m G$ is assumed to be shared by all range gates.
+
+\paragraph{Texture ratio estimation.} A covariance estimate is first formed separately for the \gls{cut} and for each training gate, using the single data set partition of each gate into sub-windows \cite{Aboutanios2005}. These are written as $\hat{\m Q}=\tau_0\hat{\m G}_0$ and $\hat{\m R}_k=\tau_k\hat{\m G}_k$, where $\hat{\m G}_0$ and $\hat{\m G}_k$ are both estimates of the shared speckle covariance. Since the texture factors out of each estimate,
+\begin{equation}
+    \bb E\!\left[\tr\!\big(\hat{\m Q}^{-1}\hat{\m R}_k\big)\right]
+    = \frac{\tau_k}{\tau_0}\,\tr\!\big(\bb E\big[\hat{\m G}_0^{-1}\big]\,\bb E\big[\hat{\m G}_k\big]\big)
+    \approx \frac{\tau_k}{\tau_0}\,\tr(\m I) = L\,\frac{\tau_k}{\tau_0},
+\end{equation}
+so the normalised trace
+\begin{equation}
+    \zeta_k = \frac{1}{L}\tr\!\big(\hat{\m Q}^{-1}\hat{\m R}_k\big)
+    \label{eq:ten_ratio}
+\end{equation}
+is an estimate of the \emph{texture ratio} $\tau_k/\tau_0$. The method recovers the ratio of each training texture to the texture of the \gls{cut}, but not the absolute textures.
+
+\paragraph{Normalisation and covariance estimate.} Rescaling each training estimate by its ratio replaces its texture with that of the \gls{cut},
+\begin{equation}
+    \tilde{\m R}_k = \frac{\hat{\m R}_k}{\zeta_k} \approx \tau_0\hat{\m G}_k,
+\end{equation}
+so the rescaled training estimates become homogeneous with the \gls{cut}. They are then pooled with the estimate from the \gls{cut} to form the \gls{ten} covariance estimate
+\begin{equation}
+    \hat{\m\Sigma}_\text{TEN} = \frac{1}{2K-1}\left((K-1)\hat{\m Q} + \sum_{k=1}^{K}\tilde{\m R}_k\right),
+    \label{eq:ten_cov}
+\end{equation}
+which estimates $\tau_0\m G$, the speckle covariance scaled by the texture of the \gls{cut}. The detection statistic has the same form as the \gls{amf},
+\begin{equation}
+    y_\text{TEN} = \frac{|\vb s^H\hat{\m\Sigma}_\text{TEN}^{-1}\vb x|^2}{\vb s^H\hat{\m\Sigma}_\text{TEN}^{-1}\vb s} \;\underset{H_0}{\overset{H_1}{\gtrless}}\; \gamma.
+\end{equation}
+
+\paragraph{Limitations.} The \gls{ten} method relies on two assumptions. First, the speckle covariance must be the same in every range gate, so that only the clutter power varies across range. It therefore does not account for changes in the clutter \emph{structure}, such as a shift of the clutter Doppler spectrum. Second, thermal noise is neglected, so that each covariance scales exactly with the texture; with noise, $\tau_k\m G+\sigma^2\m I$ is no longer a scaled version of a single matrix and the ratio \eqref{eq:ten_ratio} is only approximate. In addition, although the method performs well in K-distributed clutter \cite{Aboutanios2020}, the reasoning behind the particular form of the ratio estimate and of the pooled estimate \eqref{eq:ten_cov} is not derived from a formal optimality principle, which is one of the questions addressed in this thesis.
+
+\section{Summary and Research Gap}\label{sec:gap}
+The detectors reviewed in this chapter are compared in Table~\ref{tab:detector_comparison}. Two groups emerge. The Gaussian detectors and the single data set, hybrid and reduced-rank approaches are practical, but they do not use the compound-Gaussian structure of the clutter. The texture-independent detectors and the \gls{ten} method use part of that structure, the texture of each range gate, but not its distribution. Only the \gls{okd} uses the full K-distributed model, and it is not practical.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Comparison of the detectors reviewed in this chapter (SDS: single data set).}
+    \label{tab:detector_comparison}
+    \footnotesize
+    \renewcommand{\arraystretch}{1.35}\setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}l l l l c@{}}
+        \hline
+        Detector & Clutter model & Covariance & Training data & Texture pdf \\
+        \hline
+        \gls{amf} \cite{Chen1991} & Gaussian & \gls{scm} & $\approx 2L$ alike gates & No \\
+        Kelly's \gls{glrt} \cite{Kelly1986} & Gaussian & \gls{scm} & $\approx 2L$ alike gates & No \\
+        \gls{namf} \cite{Kraut1999} & Gaussian & \gls{scm} & $\approx 2L$ alike gates & No \\
+        Adaptive \gls{nmf} \cite{Conte1995, Conte1998} & Compound-Gauss. & \gls{nscm} / fixed point & Normalised gates & No \\
+        SDS \cite{Aboutanios2005, Aboutanios2019} & Gaussian & \gls{cut} sub-windows & None & No \\
+        Hybrid \cite{Aboutanios2010} & Gaussian & \gls{cut} + screened & Reduced & No \\
+        Reduced-rank \cite{Klemm2002} & Gaussian & Low-rank estimate & $\approx 2\times$ clutter rank & No \\
+        \gls{ten} \cite{Aboutanios2020} & K-distributed & Texture-normalised & All gates, rescaled & No \\
+        \gls{okd} \cite{Gini1998} & K-distributed & True $\m G$ (clairvoyant) & -- & Yes \\
+        \hline
+    \end{tabular}
+\end{table}
+
+The \gls{ten} method recovers the texture \emph{ratios} and the product $\tau_0\m G$, but never $\m G$ and the texture distribution separately, which are what the \gls{okd} requires. None of the practical approaches above therefore implements the optimum structure of the \gls{okd}, and the gap between the clairvoyant benchmark and what can be achieved with the data available to a real radar remains open. This gap motivates the objectives set out in Chapter~\ref{ch:objectives}.
 
 
 \chapter{Research Aim and Objectives}
@@ -261,13 +472,114 @@ The aim of this thesis is therefore to investigate a practical implementation of
 \end{enumerate}
 Each detector is evaluated by Monte Carlo simulation in K-distributed clutter. The \gls{cfar} property is assessed from the false-alarm probability as a function of the threshold, and detection performance is assessed from $P_d$ as a function of the \gls{scr} at a fixed $P_{fa}$, compared against the clairvoyant \gls{okd}, the \gls{amf}, the \gls{namf} and the \gls{ten} detector.
 
-\chapter{Preliminary Work}
+\chapter{Preliminary Work}\label{ch:prelim}
+This chapter describes the work completed so far towards the first two sub-objectives: a validated simulator for K-distributed clutter, and a first look at the effect of replacing the true covariance with the \gls{scm}.
+
+\section{K-distributed Clutter Simulator}\label{sec:simulator}
+A clutter simulator was written in MATLAB, based on Melvin's clutter patch model \cite{Melvin2004}. For each range gate, the iso-range ring is divided into $N_\theta$ independent patches, each at its own angle $\theta_k$. Each patch reflects the pulse like a point scatterer, so the speckle is the sum of their space-time signatures,
+\begin{equation}
+    \vb q = \sum_{k=1}^{N_\theta} \alpha_k\, \vb v_k,
+    \qquad \vb v_k = \vb s\big(f_s(\theta_k),\, f_d(\theta_k)\big),
+    \label{eq:clutter_patches}
+\end{equation}
+where $\alpha_k$ is the random complex amplitude of patch $k$, weighted by the two-way antenna gain in its direction, and $f_d(\theta_k)$ follows the clutter ridge \eqref{eq:clutter_ridge}. The true speckle covariance is then
+\begin{equation}
+    \m G = \sum_{k=1}^{N_\theta} \bb E\!\left[|\alpha_k|^2\right]\vb v_k\vb v_k^H,
+    \label{eq:G_patches}
+\end{equation}
+and the clutter is formed as $\vb c=\sqrt{\tau}\,\vb q$ with gamma-distributed texture \eqref{eq:compound_gaussian}. The simulator returns the received data for $N_r$ range gates together with $\m G$, the clutter-only data and the texture of every range gate, so that each step of a detector can be compared with its clairvoyant counterpart. The main simulation parameters are listed in Table~\ref{tab:sim_params}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Main simulation parameters.}
+    \label{tab:sim_params}
+    \begin{tabular}{@{}l c@{}}
+        \hline
+        Parameter & Value \\
+        \hline
+        Number of antenna elements, $N$ & 8 \\
+        Number of pulses, $M$ & 16 \\
+        Space-time dimension, $L=NM$ & 128 \\
+        Element spacing, $d$ & ?? \\
+        Platform velocity, $v_p$ & ?? \\
+        Pulse repetition frequency, $f_\mathrm{PRF}$ & ?? \\
+        Clutter-to-noise ratio, \gls{cnr} & ?? \\
+        Texture shape parameter, $a$ & ?? \\
+        \hline
+    \end{tabular}
+\end{table}
+% TODO (Tian): fill the ?? entries from elec4951.m.
+
+Two clutter models are available: Gaussian clutter ($\tau=1$), and K-distributed clutter in which an independent texture $\tau_k\sim\Gamma(a,1/a)$ is drawn for each range gate and held constant over the \gls{cpi}, as in \eqref{eq:compound_gaussian}. The thermal noise power is set from the expected speckle power and the chosen \gls{cnr}, so that the noise floor does not change with the texture.
+
+The simulator was validated in three ways. First, for Gaussian clutter, the amplitude of the samples was confirmed to be Rayleigh distributed with uniformly distributed phase, and the \gls{scm} of many range gates was confirmed to converge to $\m G$. Second, for K-distributed clutter, the histogram of the simulated amplitude was compared with the K-distribution \eqref{eq:kdist}, and agreed closely for both spiky ($a=0.5$) and nearly Gaussian ($a=20$) clutter (Figure~\ref{fig:kdist_validation}). Third, the angle-Doppler structure of the clutter was checked using the \gls{mvdr} spectrum
+\begin{equation}
+    P(f_s,f_d) = \frac{1}{\vb s^H\m R^{-1}\vb s},
+    \label{eq:mvdr}
+\end{equation}
+which gives the minimum output power of a filter with unit gain in the direction $\vb s(f_s,f_d)$, and is much sharper than the conventional Fourier spectrum $\vb s^H\m R\vb s$. The spectrum of the true covariance (Figure~\ref{fig:true_mvdr}) shows the clutter concentrated along the ridge $f_d=\beta f_s$ predicted by \eqref{eq:clutter_ridge}, with the noise floor elsewhere.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\linewidth]{seminar/figs/kdist_clutter.png}
+    \caption{Amplitude of the simulated K-distributed clutter compared with the theoretical K-distribution.}
+    \label{fig:kdist_validation}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.55\linewidth]{seminar/figs/true_MVDR.png}
+    \caption{\gls{mvdr} spectrum of the true interference covariance. The clutter lies along the ridge $f_d=\beta f_s$.}
+    \label{fig:true_mvdr}
+\end{figure}
+
+\section{Sample versus True Covariance}\label{sec:scm_vs_true}
+As a first step towards the second sub-objective, the effect of replacing the true covariance $\m R$ with the \gls{scm} $\hat{\m R}$ was examined using the \gls{mvdr} spectrum. Gaussian training data was simulated with sample supports of $K=L+10$, $2L$ and $10L$, and the spectrum \eqref{eq:mvdr} was computed with $\hat{\m R}$ in place of $\m R$ (Figure~\ref{fig:scm_vs_true}).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\linewidth]{seminar/figs/scm_vs_true.png}
+    \caption{\gls{mvdr} spectra computed with the true covariance and with the \gls{scm} for sample supports $K=L+10$, $2L$ and $10L$.}
+    \label{fig:scm_vs_true}
+\end{figure}
+
+The clutter ridge is preserved in every case, but with small sample support the spectrum is noisier and its floor is lower. This is explained by the statistics of the inverse \gls{scm}, which follows an inverse Wishart distribution with
+\begin{equation}
+    \bb E\big[\hat{\m R}^{-1}\big] = \frac{K}{K-L}\,\m R^{-1},
+\end{equation}
+so that the spectrum is expected to drop by a factor of approximately $(K-L)/K$. This corresponds to $-11.4$\,dB, $-3.0$\,dB and $-0.5$\,dB for $K=L+10$, $2L$ and $10L$ respectively. As $K$ increases, the \gls{scm} spectrum approaches that of the true covariance.
+% TODO (Tian): if you have measured floor values from your figure, quote them here next to the predictions.
+
+These results quantify the loss of the \gls{scm} in a \emph{linear} filter. The next step is to determine what the \gls{scm} costs when it replaces $\m G$ inside the non-linear \gls{okd}, both with and without first removing the texture from the training gates, and whether the resulting detector remains \gls{cfar}.
+
+\section{Detector Implementation}\label{sec:detector_code}
+A Monte Carlo framework has been implemented in which, for every trial, fresh clutter is drawn for the \gls{cut} and for $K$ training gates, and the test statistics of the \gls{amf}, the \gls{namf}, the clairvoyant \gls{wmf} (given the true texture of the \gls{cut}) and the \gls{okd} are computed (Appendix~\ref{app:run_trials}). Since thermal noise is included, the \gls{okd} has no closed form, so the integral over the texture in \eqref{eq:okd} is evaluated numerically. The data and steering vector are rotated into the eigenbasis of $\m G$, so that $\m R=\tau\m G+\sigma^2\m I$ is diagonal for every value of $\tau$, and the integral is approximated by a sum over a grid of texture values covering the gamma distribution, computed in the log domain for numerical stability. The next step is to use this framework to produce the $P_{fa}$ and $P_d$ curves for the first sub-objective.
+
+\section{False-Alarm Behaviour of the Gaussian Detectors}\label{sec:pfa_results}
+The framework was used to examine whether the \gls{amf} and \gls{namf} maintain the \gls{cfar} property in K-distributed clutter. For each detector, the test statistic was computed under $H_0$ over ?? Monte Carlo trials with $K=2L$ training gates, for Gaussian clutter and for K-distributed clutter with shape parameters $a=$ ??, and the probability of false alarm was estimated as the fraction of trials exceeding each threshold (Figure~\ref{fig:pfa_vs_threshold}).
+
+\begin{figure}[htbp]
+    \centering
+    % TODO (Tian): replace the box with your MATLAB figure, e.g.
+    % \includegraphics[width=0.75\linewidth]{figs/pfa_vs_threshold.png}
+    \fbox{\parbox[c][6cm][c]{0.75\linewidth}{\centering\small Figure placeholder:\\ $P_{fa}$ against threshold, \gls{amf} and \gls{namf},\\ Gaussian and K-distributed clutter}}
+    \caption{Probability of false alarm against threshold for the \gls{amf} (left) and the \gls{namf} (right), in Gaussian clutter and in K-distributed clutter with shape parameters $a=$ ??, using $K=2L$ training gates and ?? Monte Carlo trials. A detector is \gls{cfar} if its curves coincide for every clutter distribution.}
+    \label{fig:pfa_vs_threshold}
+\end{figure}
+
+% TODO (Tian): describe what your figure shows. Suggested structure:
+% 1. For the AMF, the curves for K-distributed clutter lie above/below the Gaussian curve, so the threshold that gives P_fa = 10^{-3} in Gaussian clutter gives P_fa = ?? when a = ??.
+% 2. For the NAMF, the curves (do / do not) coincide, because the texture of the CUT cancels in the statistic, (but the training textures still affect the SCM).
+% 3. Conclusion: the AMF loses the CFAR property in K-distributed clutter, confirming the problem stated in Section 1.3 and motivating sub-objective 2.
+
+
 \chapter{Project Planning}
 \chapter{Conclusion}
-
 
 \newpage
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
+
+\input{report-A/appendix}
 
 \end{document}

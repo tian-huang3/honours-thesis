@@ -1,0 +1,19 @@
+\appendix
+\chapter{MATLAB Code}\label{app:code}
+This appendix lists the MATLAB code written for the preliminary work in Chapter~\ref{ch:prelim}. The code is also available in the project repository.
+
+\section{Clutter Simulator}\label{app:gen_clutter}
+The function \texttt{gen\_clutter\_data} generates the space-time data for $N_r$ range gates using the clutter patch model of Section~\ref{sec:clutter}, with Gaussian or K-distributed texture, and returns the true speckle covariance $\m G$.
+{\linespread{1}\selectfont\lstinputlisting[style=matlab]{code/gen_clutter_data.m}}
+
+\section{MVDR Spectrum}\label{app:mvdr}
+The function \texttt{mvdr\_spectrum} evaluates the \gls{mvdr} spectrum \eqref{eq:mvdr} of a covariance matrix over a grid of angles and normalised Doppler frequencies.
+{\linespread{1}\selectfont\lstinputlisting[style=matlab]{code/mvdr_spectrum.m}}
+
+\section{Monte Carlo Detector Trials}\label{app:run_trials}
+The function \texttt{run\_trials} runs Monte Carlo trials of the \gls{amf}, the \gls{namf}, the clairvoyant \gls{wmf} and the \gls{okd}, and returns their test statistics.
+{\linespread{1}\selectfont\lstinputlisting[style=matlab]{code/run_trials.m}}
+
+\section{Main Script}\label{app:main}
+The script \texttt{main} sets the simulation parameters, validates the simulator and produces the figures in Chapter~\ref{ch:prelim}.
+{\linespread{1}\selectfont\lstinputlisting[style=matlab]{code/main.m}}
