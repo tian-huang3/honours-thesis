@@ -11,7 +11,7 @@ vp = 75.5; d = lambda/2; thetaL = 0;
 
 Ntheta = 360;
 a = 1; b = 1;
-CNR = 100;
+CNR = 20;
 Ktype = 1; Dtype = 0; u = 0;
 
 p.radar  = struct('N', N, 'M', M, 'PRF', PRF, 'lambda', lambda, 'vp', vp, ...
