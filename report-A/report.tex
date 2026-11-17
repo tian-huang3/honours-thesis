@@ -31,12 +31,12 @@
 
 \chapter{Introduction}\label{ch:intro}
 \section{Motivation}
-A radar is a system that transmits radio waves and listens for the echoes reflected back by objects in its surroundings \cite{Skolnik2001, Richards2005}. From these echoes, the presence of an object, known as a \emph{target}, can be detected, and its range, direction and velocity can be estimated. Since \gls{em} waves travel long distances and can work through obstacles such as darkness, fog and rain, radar can operate in conditions where optical sensors cannot. For this reason, radar target detection is used in a wide range of important applications, such as air traffic control or search and rescue operations. 
+A radar is a system that transmits radio waves and listens for the echoes reflected back by objects in its surroundings \cite{Skolnik2001, Richards2005}. From these echoes, the presence of a specific \emph{target} can be detected, and its range, direction and velocity can be estimated. Since \gls{em} waves travel long distances and can work through obstacles such as darkness, fog and rain, radar can operate in conditions where optical sensors cannot. For this reason, radar target detection is used in a wide range of important applications, from air traffic control to search and rescue operations. 
 
 However, a radar never receives the echo of a target alone. It also receives \emph{noise}, mostly thermal noise generated in receiver electronics, and \emph{clutter}, the unwanted echoes from the environment. Thermal noise is well understood and comparatively easy to account for. Clutter is often much more difficult to manage, particularly at sea, where it is often stronger than the echo of a small or slow-moving target. In this thesis, we mainly focus on the challenges of target detection in a maritime environment.
 
 \section{Context: What Sea Clutter Looks Like}
-Effective target detection depends on the suppression of noise and clutter. At sea, clutter that is reflected off the surface of the sea can be particularly difficult to suppress due to its nature. Sea clutter has two properties that distinguish it from simpler forms of interference \cite{Ward2013, Rosenberg2017}:
+Effective target detection depends on the suppression of noise and clutter. Clutter that is reflected off the surface of the sea can be particularly difficult to suppress due to its nature. Sea clutter has two properties that distinguish it from simpler forms of interference \cite{Ward2013, Rosenberg2017}:
 
 \begin{itemize}
     \item \textbf{Spiky (non-Gaussian).} Breaking waves form whitecaps which produce short-lived, bright returns known as sea spikes. A sea spike can be as strong as the echo from a boat, so it is easily mistaken for a target.
@@ -70,7 +70,7 @@ Practical detectors for heterogeneous clutter have been developed to reduce the 
 
 \section{Thesis Aim}
 \label{sec:aim}
-The aim of this thesis is to investigate a practical version of the optimum detector for K-distributed clutter, one that uses only the data available to a real radar, and to determine whether it maintains a constant false-alarm rate. The specific objectives are set out in Chapter~\ref{ch:objectives}, once the necessary background has been introduced.
+The aim of this thesis is to investigate a practical version of the optimum detector for K-distributed clutter, one that uses only the data available to a real radar, and to determine whether it maintains a constant false-alarm rate. The specific objectives are set out in Chapter~\ref{ch:research_outline}, once the necessary background has been introduced.
 
 %%----- Background -----%%
 \newpage
@@ -199,6 +199,7 @@ where $\sigma^2$ is the noise power. The covariance is $\sigma^2\m I$ because th
 At sea, clutter is mostly echoes off the surface of the sea. Sea clutter observed by high-resolution radars, particularly at low and medium grazing angles, depart from the classical Gaussian and homogeneous assumption in two ways \cite{Ward2013, Rosenberg2017}: its spiky (non-Gaussian) and heterogeneous nature. Both effects are captured by the compound-Gaussian model \cite{Ward1981, Ward2013}, where
 \begin{equation}
     \vb c = \sqrt{\tau}\vb q.
+    \label{eq:clutter_model}
 \end{equation}
 The \emph{speckle} $\vb q \sim \cal CN(\vb 0, \m G)$ is a zero-mean complex Gaussian vector that represents the fast, small-scale scattering from ripples. The \emph{texture} $\tau\sim\Gamma(a, b)$ is a gamma-drawn random variable that represents the local clutter power set by large-scale swell. \\\\
 Thus, conditioned on the texture, the clutter is Gaussian, 
@@ -386,7 +387,7 @@ Because it is similarly built on the exact likelihoods, the \gls{okd} gives the 
 \label{sec:practical}
 Several practical detectors reduce the need for large amounts of homogeneous training data. They keep an \gls{amf}-type statistic and change only how the covariance is estimated.
 \begin{itemize}
-    \item \textbf{Single data set detectors} \cite{Aboutanios2005, Aboutanios2019} estimate the covariance from the \gls{cut} alone, using lower-dimensional snapshots formed from sub-windows of the \gls{cut} in space and time. No training data is needed, so heterogeneity across range has no effect, at the cost of fewer degrees of freedom.
+    \item \textbf{\Gls{sds} detectors} \cite{Aboutanios2005, Aboutanios2019} estimate the covariance from the \gls{cut} alone, using lower-dimensional snapshots formed from sub-windows of the \gls{cut} in space and time. No training data is needed, so heterogeneity across range has no effect, at the cost of fewer degrees of freedom.
     \item \textbf{Hybrid detectors} \cite{Aboutanios2010} combine the single data set estimate with an estimate from training gates screened to resemble the \gls{cut}.
 \end{itemize}
 Both improve on the Gaussian detectors, but they are derived under a Gaussian model, so the variation of the texture appears to them simply as a variation in power. The \gls{ten} method, reviewed next, is designed specifically for K-distributed clutter.
@@ -415,11 +416,12 @@ The method assumes that $\m G$ is the same in every range gate and that thermal 
 \label{ch:research_outline}
 
 \section{Summary and Research Gap}\label{sec:gap}
-The detectors reviewed in the last chapter are compared in Table~\ref{tab:detector_comparison}. Two groups emerge. The Gaussian detectors and the single data set, hybrid and reduced-rank approaches are practical, but they do not use the compound-Gaussian structure of the clutter. The texture-independent detectors and the \gls{ten} method use part of that structure, the texture of each range gate, but not its distribution. Only the \gls{okd} uses the full K-distributed model, and it is not practical.
+The detectors reviewed in the last chapter are compared in Table~\ref{tab:detector_comparison}. The adaptive Gaussian detectors, the single data set, hybrid and reduced-rank approaches are practical, but they do not use the compound-Gaussian structure of the clutter. The texture-independent detectors and the \gls{ten} method use part of that structure, the texture of each range gate, but not its distribution. Only the \gls{okd} uses the full K-distributed model, and it is not practical.
 
+\vspace{5mm}
 \begin{table}[htbp]
     \centering
-    \caption{Comparison of the detectors reviewed in this chapter (SDS: single data set).}
+    \caption{Comparison of the existing detectors reviewed in Section~\ref{sec:existing_detectors}}
     \label{tab:detector_comparison}
     \footnotesize
     \renewcommand{\arraystretch}{1.35}\setlength{\tabcolsep}{4pt}
@@ -427,18 +429,17 @@ The detectors reviewed in the last chapter are compared in Table~\ref{tab:detect
         \hline
         Detector & Clutter model & Covariance & Training data & Texture pdf \\
         \hline
-        \gls{amf} \cite{Chen1991} & Gaussian & \gls{scm} & $\approx 2L$ alike gates & No \\
-        Kelly's \gls{glrt} \cite{Kelly1986} & Gaussian & \gls{scm} & $\approx 2L$ alike gates & No \\
-        \gls{namf} \cite{Kraut1999} & Gaussian & \gls{scm} & $\approx 2L$ alike gates & No \\
-        Adaptive \gls{nmf} \cite{Conte1995, Conte1998} & Compound-Gauss. & \gls{nscm} / fixed point & Normalised gates & No \\
-        SDS \cite{Aboutanios2005, Aboutanios2019} & Gaussian & \gls{cut} sub-windows & None & No \\
-        Hybrid \cite{Aboutanios2010} & Gaussian & \gls{cut} + screened & Reduced & No \\
-        Reduced-rank \cite{Klemm2002} & Gaussian & Low-rank estimate & $\approx 2\times$ clutter rank & No \\
-        \gls{ten} \cite{Aboutanios2020} & K-distributed & Texture-normalised & All gates, rescaled & No \\
-        \gls{okd} \cite{Gini1998} & K-distributed & True $\m G$ (clairvoyant) & -- & Yes \\
+        \acrshort{amf} \cite{Chen1991} & Gaussian & \acrshort{scm} & $\approx 2L$ alike gates & No \\
+        Kelly's \acrshort{glrt} \cite{Kelly1986} & Gaussian & \acrshort{scm} & $\approx 2L$ alike gates & No \\
+        \acrshort{namf} \cite{Kraut1999} & Gaussian & \acrshort{scm} & $\approx 2L$ alike gates & No \\
+        \acrshort{sds} \cite{Aboutanios2005, Aboutanios2019} & Gaussian & \acrshort{cut} sub-windows & None & No \\
+        Hybrid \cite{Aboutanios2010} & Gaussian & \acrshort{cut} + screened & Reduced & No \\
+        \acrshort{ten} \cite{Aboutanios2020} & K-distributed & Texture-normalised & All gates, rescaled & No \\
+        \acrshort{okd} \cite{Gini1998} & K-distributed & True $\m G$ (clairvoyant) & -- & Yes \\
         \hline
     \end{tabular}
 \end{table}
+\vspace{5mm}
 
 The \gls{ten} method recovers the texture \emph{ratios} and the product $\tau_0\m G$, but never $\m G$ and the texture distribution separately, which are what the \gls{okd} requires. None of the practical approaches above therefore implements the optimum structure of the \gls{okd}, and the gap between the clairvoyant benchmark and what can be achieved with the data available to a real radar remains open. This gap motivates the objectives set out in Section~\ref{sec:objectives}.
 
@@ -454,21 +455,37 @@ Each detector is evaluated by Monte Carlo simulation in K-distributed clutter. T
 
 \newpage
 \chapter{Preliminary Work}\label{ch:prelim}
-This chapter describes the work completed so far towards the first two sub-objectives: a validated simulator for K-distributed clutter, and a first look at the effect of replacing the true covariance with the \gls{scm}.
-
+This chapter describes the work completed so far towards the first two sub-objectives: a validated simulator for K-distributed clutter, and an initial investigation into the effect of replacing the true covariance with the \gls{scm}.
 \section{K-distributed Clutter Simulator}\label{sec:simulator}
+\subsection{Melvin's Clutter Patch Model \cite{Melvin2004}}
+\label{sec:melvins_model}
 A clutter simulator was written in MATLAB, based on Melvin's clutter patch model \cite{Melvin2004}. For each range gate, the iso-range ring is divided into $N_\theta$ independent patches, each at its own angle $\theta_k$. Each patch reflects the pulse like a point scatterer, so the speckle is the sum of their space-time signatures,
 \begin{equation}
     \vb q = \sum_{k=1}^{N_\theta} \alpha_k\, \vb v_k,
     \qquad \vb v_k = \vb s\big(f_s(\theta_k),\, f_d(\theta_k)\big),
     \label{eq:clutter_patches}
 \end{equation}
-where $\alpha_k$ is the random complex amplitude of patch $k$, weighted by the two-way antenna gain in its direction, and $f_d(\theta_k)$ follows the clutter ridge \eqref{eq:clutter_ridge}. The true speckle covariance is then
+where $\alpha_k$ is the random complex amplitude of patch $k$, weighted by the two-way antenna gain in its direction, and $f_d(\theta_k)$ is its Doppler frequency, given in Section~\ref{sec:clutter_ridge}. The true speckle covariance is then
 \begin{equation}
     \m G = \sum_{k=1}^{N_\theta} \bb E\!\left[|\alpha_k|^2\right]\vb v_k\vb v_k^H,
     \label{eq:G_patches}
 \end{equation}
-and the clutter is formed as $\vb c=\sqrt{\tau}\,\vb q$ with gamma-distributed texture \eqref{eq:compound_gaussian}. The simulator returns the received data for $N_r$ range gates together with $\m G$, the clutter-only data and the texture of every range gate, so that each step of a detector can be compared with its clairvoyant counterpart. The main simulation parameters are listed in Table~\ref{tab:sim_params}.
+and the clutter is formed as $\vb c=\sqrt{\tau}\,\vb q$ with gamma-distributed texture \eqref{eq:clutter_model}.
+
+\subsection{Clutter Ridge and Brennan's Rule}
+\label{sec:clutter_ridge}
+The patch model shows that the structure of $\m G$ in angle and Doppler is set by the Doppler frequency of each patch. Although the sea surface can be considered stationary, the platform is not. A patch at angle $\theta$ therefore has radial velocity $v_r=v_p\sin\theta$ relative to the platform\footnote{It is useful to refer back to Figure~\ref{fig:airborne_radar_signal_model} to see this.}, so from Equations \eqref{eq:f_s} and \eqref{eq:f_d} its normalised Doppler frequency is
+\begin{equation}
+    f_d(\theta) = \frac{2v_pT_r}{\lambda}\sin\theta = \beta\, f_s(\theta),
+    \qquad \beta = \frac{2v_pT_r}{d}.
+    \label{eq:clutter_ridge}
+\end{equation}
+The Doppler frequency and spatial frequency are therefore proportional to each other, so the clutter occupies a straight line with slope $\beta$ in the angle-Doppler plane, known as the \emph{clutter ridge}. This ridge can be seen in the \gls{mvdr} spectrum of the simulated clutter in Section~\ref{sec:sim_validation}.
+
+\subsection{Implementation and Validation in MATLAB}\label{sec:sim_validation}
+The K-distributed clutter generator was implemented and then validated in MATLAB.
+
+The simulator returns the received data for $N_r$ range gates together with $\m G$, the clutter-only data and the texture of every range gate, so that each step of a detector can be compared with its clairvoyant counterpart. The following simulation parameters were used, listed in Table~\ref{tab:sim_params}.
 
 \begin{table}[htbp]
     \centering
