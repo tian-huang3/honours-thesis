@@ -25,23 +25,25 @@
 \titlespacing*{\subsection}{0pt}{1.5ex plus 1ex minus .2ex}{0.8ex plus .2ex}
 
 \begin{document}
+\input{report-A/cover_page}
 \input{report-A/abstract}
+\input{report-A/acknowledgements}
 
 \printnoidxglossary[type=\acronymtype, title={List of Acronyms}, style=long, nogroupskip, nonumberlist]
 \tableofcontents
 
 \chapter{Introduction}\label{ch:intro}
 \section{Motivation}
-A radar is a system that transmits radio waves and listens for the echoes reflected back by objects in its surroundings \cite{Skolnik2001, Richards2005}. From these echoes, the presence of a specific \emph{target} can be detected, and its range, direction and velocity can be estimated. Since \gls{em} waves travel long distances and can work through obstacles such as darkness, fog and rain, radar can operate in conditions where optical sensors cannot. For this reason, radar target detection is used in a wide range of important applications, from air traffic control to search and rescue operations. 
+A radar is a system that transmits radio waves and listens for the echoes reflected back by objects in its surroundings. From these echoes, the presence of a specific \emph{target} can be detected, and its range, direction and velocity can be estimated. Since \gls{em} waves travel long distances and can work through obstacles such as darkness, fog and rain, radar can operate in conditions where optical sensors cannot. For this reason, radar target detection is used in a wide range of important applications, from air traffic control to search and rescue operations. 
 
 However, a radar never receives the echo of a target alone. It also receives \emph{noise}, mostly thermal noise generated in receiver electronics, and \emph{clutter}, the unwanted echoes from the environment. Thermal noise is well understood and comparatively easy to account for. Clutter is often much more difficult to manage, particularly at sea, where it is often stronger than the echo of a small or slow-moving target. In this thesis, we mainly focus on the challenges of target detection in a maritime environment.
 
 \section{Context: What Sea Clutter Looks Like}
-Effective target detection depends on the suppression of noise and clutter. Sea clutter which are generally reflections off the sea surface can be particularly difficult to suppress due to its nature. Sea clutter has two properties that distinguish it from simpler forms of interference \cite{Ward2013, Rosenberg2017}:
+Effective target detection depends on the suppression of noise and clutter. Sea clutter which are generally reflections off the sea surface can be particularly difficult to suppress due to its nature. Sea clutter has two properties that distinguish it from simpler forms of interference \cite{Rosenberg2017}:
 
 \begin{itemize}
     \item \textbf{Spiky (non-Gaussian).} Breaking waves form whitecaps which produce short-lived, bright returns known as sea spikes. These returns can be as strong as the echo from a small or slow-moving object, and so can easily be mistaken for a target.
-    \item \textbf{Heterogeneous.} Ocean swell causes the echo power to rise and fall from one range cell to the next, while wind and currents change the motion of the surface, and hence its Doppler frequency, across the scene. The clutter statistics therefore vary between range cells \cite{Mungara2024}, and we describe this as heterogeneous.
+    \item \textbf{Heterogeneous.} Ocean swell causes the echo power to rise and fall from one range cell to the next, while wind and currents change the motion of the surface, and hence its Doppler frequency, across the scene. The clutter statistics therefore vary between range cells, and we describe this as heterogeneous.
 \end{itemize}
 
 \begin{figure}[htbp]
@@ -67,7 +69,7 @@ Classical adaptive detectors such as the \gls{amf} \cite{Chen1991}, \gls{namf} \
 
 When detection is formulated with a binary hypothesis test, the \gls{np} lemma in statistics gives the \gls{okd} \cite{Gini1998}, which achieves the best possible detection performance. However, the \gls{okd} requires the speckle covariance and the distribution of the texture to be known, and in practice neither is. It therefore serves only as an optimum, mathematical benchmark.
 
-Practical detectors for heterogeneous clutter have been developed to reduce the amount of homogeneous training data required, including single data set detectors \cite{Aboutanios2005, Aboutanios2019} and hybrid detectors \cite{Aboutanios2010}, which improve on the classical detectors under the Gaussian assumption. The \gls{ten} method \cite{Aboutanios2020} is one other practical adaptive detector which does actually use the K-distributed clutter model, however it never recovers the speckle covariance and texture statistics explicitly. Thus, the problem is that there exists no practical implementation of a compound-Gaussian detector that takes advantage of the \gls{okd}'s optimum structure. 
+Practical detectors for heterogeneous clutter have been developed to reduce the amount of homogeneous training data required, including single data set detectors \cite{Aboutanios2005} and hybrid detectors \cite{Aboutanios2010}, which improve on the classical detectors under the Gaussian assumption. The \gls{ten} method \cite{Aboutanios2020} is one other practical adaptive detector which does actually use the K-distributed clutter model, however it never recovers the speckle covariance and texture statistics explicitly. Thus, the problem is that there exists no practical implementation of a compound-Gaussian detector that takes advantage of the \gls{okd}'s optimum structure. 
 
 \section{Thesis Aim}
 \label{sec:aim}
@@ -183,7 +185,7 @@ The remainder of this section describes each of the three terms of the received 
 
 \subsection{Target Return}
 \label{sec:target_return}
-The target return is modelled as a known steering vector $\vb s$ scaled by a complex amplitude $\alpha$, the standard target model of adaptive detection \cite{Reed1974, Kelly1986, Chen1991, Ward1994}. The amplitude $\alpha$ depends on the target's reflectivity and exact range. Neither of these are known in advance, so $\alpha$ is treated as unknown. The target is also assumed not to fluctuate over the \gls{cpi}, so $\alpha$ is constant across the $M$ pulses.\\
+The target return is modelled as a known steering vector $\vb s$ scaled by a complex amplitude $\alpha$, the standard target model of adaptive detection \cite{Kelly1986}. The amplitude $\alpha$ depends on the target's reflectivity and exact range. Neither of these are known in advance, so $\alpha$ is treated as unknown. The target is also assumed not to fluctuate over the \gls{cpi}, so $\alpha$ is constant across the $M$ pulses.\\
 
 \subsection{Noise Return}
 \label{sec:noise_return}
@@ -195,7 +197,7 @@ where $\sigma^2$ is the noise power. The covariance is $\sigma^2\m I$ because th
 
 \subsection{K-distributed Clutter Return}
 \label{sec:kdist_clutter}
-Both the spiky and heterogeneous nature of sea clutter is captured by the compound-Gaussian model \cite{Ward1981, Ward2013}, where
+Both the spiky and heterogeneous nature of sea clutter is captured by the compound-Gaussian model \cite{Rosenberg2017}, where
 \begin{equation}
     \vb c = \sqrt{\tau}\vb q.
     \label{eq:clutter_model}
@@ -206,7 +208,7 @@ Thus, conditioned on the texture, the clutter is Gaussian,
 \begin{equation}
     \vb c\mid\tau\sim\cal{CN}(\vb 0, \tau\m G).
 \end{equation}
-When the texture is gamma distributed, $\tau\sim\Gamma(a, b)$, the resultant amplitude $r=|c|$ of a single clutter sample with speckle power $P$ follows what is called the K-distribution \cite{Ward2013}. The shape parameter $a$ controls how spiky the clutter is. Small values ($a\lesssim 1$) produce spikier clutter with a long tail, while as $a\to\infty$ the texture tends to a constant and the amplitude reverts to the Rayleigh distribution of Gaussian clutter amplitude. The K-distribution has been shown to be an accurate model for radar sea clutter over a wide range of conditions \cite{Ward2013}, and is the clutter model adopted in this thesis.\\
+When the texture is gamma distributed, $\tau\sim\Gamma(a, b)$, the resultant amplitude $r=|c|$ of a single clutter sample with speckle power $P$ follows what is called the K-distribution \cite{Gini1998}. The shape parameter $a$ controls how spiky the clutter is. Small values ($a\lesssim 1$) produce spikier clutter with a long tail, while as $a\to\infty$ the texture tends to a constant and the amplitude reverts to the Rayleigh distribution of Gaussian clutter amplitude. The K-distribution has been shown to be an accurate model for radar sea clutter over a wide range of conditions \cite{Gini2002}, and is the clutter model adopted in this thesis.\\
 
 \subsection{Interference Covariance and Summary}
 \label{sec:covariance}
@@ -249,7 +251,7 @@ with $\alpha=0$ when no target is present. The complete model is summarised in T
 \section{Detection Theory}
 \label{sec:detection_theory}
 \subsection{Hypothesis Testing $H_0/H_1$}
-The target detection problem is commonly formulated as a binary hypothesis test as in \cite{Melvin2004}, \cite{Aboutanios2020}. We define the null hypothesis, $H_0$ to be that the target is not present and the alternative hypothesis $H_1$, being that the target is present. For the \gls{cut}, the two hypotheses correspond to the received vector
+The target detection problem is commonly formulated as a binary hypothesis test as in \cite{Aboutanios2020}. We define the null hypothesis, $H_0$ to be that the target is not present and the alternative hypothesis $H_1$, being that the target is present. For the \gls{cut}, the two hypotheses correspond to the received vector
 \begin{align}
     H_0:\quad \vb x&=\vv\varsigma\nonumber\\
     H_1:\quad \vb x&=\alpha\vb s + \vv\varsigma.\nonumber
@@ -272,7 +274,7 @@ Since $P_d$ and $P_{fa}$ cannot both be made arbitrarily small, radar target det
     y=\frac{f_{\vb x}(\vb x\mid H_1)}{f_{\vb x}(\vb x\mid H_0)}\;\underset{H_0}{\overset{H_1}{\gtrless}}\; \gamma,
     \label{eq:lrt}
 \end{equation}
-is the test that achieves the maximum probability of detection $P_d$, where the threshold $\gamma$ is set for a $P_{fa}$ deemed tolerable. It is the optimum detector when both probability densities in Equation~\eqref{eq:lrt} are known. In practice however, the probability densities depend on the interference statistics and the complex amplitude $\alpha$ which are both unknown. The \acrfull{glrt} is the standard method used instead, in which each unknown parameter is replaced by its \gls{mle} \cite{Kay1998}. The \gls{glrt} forms the basis of most of the existing adaptive detectors \cite{Kelly1986, Chen1991, Kraut1999} which is reviewed in the next section.\\
+is the test that achieves the maximum probability of detection $P_d$, where the threshold $\gamma$ is set for a $P_{fa}$ deemed tolerable. It is the optimum detector when both probability densities in Equation~\eqref{eq:lrt} are known. In practice however, the probability densities depend on the interference statistics and the complex amplitude $\alpha$ which are both unknown. The \acrfull{glrt} is the standard method used instead, in which each unknown parameter is replaced by its \gls{mle} \cite{Kay1998}. The \gls{glrt} forms the basis of most of the existing adaptive detectors which is reviewed in the next section.\\
 
 \subsection{Constant False Alarm Rate (CFAR) Property}
 \label{sec:cfar}
@@ -317,7 +319,7 @@ All three detectors are \gls{cfar} when the clutter is Gaussian and homogeneous.
     \bb E\big[\hat{\m R}\big] = \bar\tau\m G + \sigma^2\m I,
     \qquad \bar\tau = \frac{1}{K}\sum_{k=1}^{K}\tau_k.
 \end{equation}
-Here, $\bar\tau$ can be dominated by the texture of a single spiky training gate. The \gls{amf} and Kelly's \gls{glrt} therefore lose the \gls{cfar} property, and all three detectors lose detection performance, since the likelihoods they are derived from do not describe the compound-Gaussian structure of the clutter \cite{Gini1998, Rosenberg2017}. \\
+Here, $\bar\tau$ can be dominated by the texture of a single spiky training gate. The \gls{amf} and Kelly's \gls{glrt} therefore lose the \gls{cfar} property, and all three detectors lose detection performance, since the likelihoods they are derived from do not describe the compound-Gaussian structure of the clutter \cite{Rosenberg2017}. \\
 
 \subsection{The Optimum K-distributed Detector (OKD)}
 \label{sec:okd}
@@ -343,7 +345,7 @@ Unlike the Gaussian adaptive detectors, the \gls{okd} is built on the exact like
 \label{sec:practical}
 Several practical detectors have been developed which reduce the amount of homogeneous training data needed to estimate the covariance matrix, but keep the AMF-type statistic.
 \begin{itemize}
-    \item \textbf{\Gls{sds} detectors} \cite{Aboutanios2005, Aboutanios2019} estimate the covariance from the \gls{cut} alone, using snapshots formed from windows of just the \gls{cut} in space and time. No training data is used.
+    \item \textbf{\Gls{sds} detectors} \cite{Aboutanios2005} estimate the covariance from the \gls{cut} alone, using snapshots formed from windows of just the \gls{cut} in space and time. No training data is used, and the approach has been applied to measured sea clutter \cite{Aboutanios2019}.
     \item \textbf{Hybrid detectors} \cite{Aboutanios2010} combine the single data set estimate with an estimate from training gates screened to resemble the \gls{cut}, thus reducing heterogeneity.
 \end{itemize}
 Both improve on the Gaussian detectors, but they are still derived under a Gaussian model. The \gls{ten} method, reviewed next, is designed specifically for K-distributed clutter.\\
@@ -378,7 +380,7 @@ which is used in place of $\hat{\m R}$ in the \gls{amf} statistic. Note that thi
         \acrshort{amf} \cite{Chen1991} & Gaussian & \acrshort{scm} & $\approx 2L$ alike gates & No \\
         Kelly's \acrshort{glrt} \cite{Kelly1986} & Gaussian & \acrshort{scm} & $\approx 2L$ alike gates & No \\
         \acrshort{namf} \cite{Kraut1999} & Gaussian & \acrshort{scm} & $\approx 2L$ alike gates & No \\
-        \acrshort{sds} \cite{Aboutanios2005, Aboutanios2019} & Gaussian & \acrshort{cut} windowed & None & No \\
+        \acrshort{sds} \cite{Aboutanios2005} & Gaussian & \acrshort{cut} windowed & None & No \\
         Hybrid \cite{Aboutanios2010} & Gaussian & \acrshort{cut} + screened & Reduced & No \\
         \acrshort{ten} \cite{Aboutanios2020} & K-distributed & Texture-normalised & All gates, rescaled & No \\
         \acrshort{okd} \cite{Gini1998} & K-distributed & True $\m G$ (clairvoyant) & -- & Yes \\
