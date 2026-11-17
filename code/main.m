@@ -36,7 +36,7 @@ r_hat  = sum(e > edge);
 
 figure; plot(10*log10(e/Pn_hat), 'o'); hold on
 xline(r_brennan, '--', 'Brennan'); yline(10*log10(edge/Pn_hat), ':')
-xlabel('Eigenvalue Index'); ylabel('dB Above Noise')
+xlabel("Eigenvalue Index"); ylabel("dB Above Noise")
 
 %% K-distributed clutter simulation
 p.cModel.Ktype = 3;         % same common texture across patches (azimuth), but different for each range gate
@@ -52,7 +52,7 @@ subplot(1, 2, 1)
 histogram(abs(varsigma(:)), 200, 'Normalization', 'pdf')   % 200 bin histogram, scaled as PDF (area = 1)
                                                            % creates empirical amplitude PDF of clutter
 
-% overlay theoretical k-distribution curve (for derivation, see Section 8.5)
+% overlay theoretical k-distribution curve (derivation Section 8.5)
 P = mean(abs(varsigma(:)).^2);
 nu = p.cModel.a;
 r = linspace(min(abs(varsigma(:))), max(abs(varsigma(:))), 200);
@@ -62,10 +62,10 @@ pdf_K = (4 * nu^((nu + 1)/2) * r.^(nu))/(gamma(nu) * P^((nu + 1)/2)) .* besselk(
 hold on;
 plot(r, pdf_K)
 
-xlabel('Amplitude $r = |\varsigma|$', 'Interpreter', 'latex')
-ylabel('$p(r)$', 'Interpreter', 'latex')
-title(sprintf('$a = %.1f$, b = %.1f', p.cModel.a, p.cModel.b), 'Interpreter', 'latex')
-legend('Simulated', 'K-distribution (theory)')
+xlabel("Amplitude $r = |\varsigma|$", "Interpreter", "latex")
+ylabel("$p(r)$", "Interpreter", "latex")
+title(sprintf("$a = %.1f$, b = %.1f", p.cModel.a, p.cModel.b), "Interpreter", "latex")
+legend("Simulated", "K-distribution (theory)")
 
 % a = 20
 p.cModel.a = 20; 
@@ -86,16 +86,10 @@ pdf_K = (4 * nu^((nu + 1)/2) * r.^(nu))/(gamma(nu) * P^((nu + 1)/2)) .* besselk(
 hold on;
 plot(r, pdf_K)
 
-xlabel('Amplitude $r = |\varsigma|$', 'Interpreter', 'latex')
-ylabel('$p(r)$', 'Interpreter', 'latex')
-title(sprintf('$a = %.1f, b = %.1f$', p.cModel.a, p.cModel.b), 'Interpreter', 'latex')
-legend('Simulated', 'K-distribution (theory)')
-
-% explanation of plot:
-% for larger shape parameter a (= nu), ... either write here or include in
-% notes - need to write explicitly why larger a => approaches Rayleigh/Gaussian
-% should i also plot for Ktypes = 0, 1, and 2? how come they dont match the
-% theoretical - are they not really k-distributed?
+xlabel("Amplitude $r = |\varsigma|$", "Interpreter", "latex")
+ylabel("$p(r)$", "Interpreter", "latex")
+title(sprintf("$a = %.1f, b = %.1f$", p.cModel.a, p.cModel.b), "Interpreter", "latex")
+legend("Simulated", "K-distribution (theory)")
 
 %% Gaussian detectors in K-distributed clutter (equivalent to run_trials.m, with Ntrials = 1)
 p.cModel.Ktype = 3;     % K-distributed clutter, one texture (from Gamma dist.) per range gate
@@ -154,11 +148,9 @@ p.cModel.a = 1; p.cModel.b = 1/p.cModel.a;
 Pfa_AMF = mean(yAMF_K > gamma_AMF);
 Pfa_NAMF = mean(yNAMF_K > gamma_NAMF);
 
-fprintf('designed Pfa = %.3f (+/- %.3f)\n', Pfa, 2*sqrt(Pfa*(1-Pfa)/Ntrials));
-fprintf('AMF : actual Pfa = %.4f\n', Pfa_AMF);
-fprintf('NAMF: actual Pfa = %.4f\n', Pfa_NAMF);
-
-%% 
+fprintf("designed Pfa = %.3f (+/- %.3f)\n", Pfa, 2*sqrt(Pfa*(1-Pfa)/Ntrials));
+fprintf("AMF : actual Pfa = %.4f\n", Pfa_AMF);
+fprintf("NAMF: actual Pfa = %.4f\n", Pfa_NAMF);
 
 %% MVDR spectrum of true covariance
 [~, ~, ~, ~, R, Pn, ~, ~] = gen_clutter_data(p, 1);
@@ -177,7 +169,7 @@ xlabel("sin(\theta)")
 ylabel("f_d (cycles/pulse)")
 ylabel(colorbar, "dB relative to P_n")
 clim([0, 35])
-title("MVDR Spectrum, True Covariance R = G + P_nI (CNR 20dB)")
+title("MVDR Spectrum, True Covariance R = G + P_nI")
 
 % alternatively, with steering angle theta on x-axis vs Doppler (Hz) 
 theta_deg = linspace(-90, 90, 201);
@@ -186,19 +178,18 @@ P = mvdr_spectrum(R, p, theta_deg, fd);
 subplot(1, 2, 2)
 imagesc(theta_deg, fd * p.radar.PRF, 10*log10(NM * P / Pn))
 axis xy; colorbar
-xlabel('Steering Angle, \theta (deg)'); ylabel('Frequency (Hz)')
-ylabel(colorbar, 'dB relative to P_n')
+xlabel("Steering Angle, \theta (deg)")
+ylabel("Frequency (Hz)")
+ylabel(colorbar, "dB relative to P_n")
 clim([0, 35])
-title('MVDR Spectrum, True Covariance (angle-Hz axes)')
+title("MVDR Spectrum, True Covariance (angle-Hz axes)")
 
 %% MVDR spectrum from the sample covariance (SCM) vs the true covariance
-% Run after the parameter block of main.m (needs p and NM in the workspace).
-% Gaussian training data (Ktype = 0), so the only error in R_hat is finite K.
 
 p.cModel.Ktype = 0;
 p.cModel.CNR = 20;
 
-Ks = [NM + 10, 2*NM, 10*NM];       % barely invertible, RMB rule, plenty
+Ks = [NM + 10, 2*NM, 10*NM];       % barely invertible, RMB rule, big sample support
 
 sin_theta = linspace(-1, 1, 201);
 fd = linspace(-0.5, 0.5, 201);
@@ -209,7 +200,7 @@ fd = linspace(-0.5, 0.5, 201);
 spectra = cell(1, 1 + length(Ks));
 labels = cell(1, 1 + length(Ks));
 spectra{1} = 10*log10(NM * mvdr_spectrum(R, p, asind(sin_theta), fd) / Pn);
-labels{1} = 'True R = G + P_nI';
+labels{1} = "True R = G + P_nI";
 
 for k = 1:length(Ks)
     K = Ks(k);
@@ -226,10 +217,12 @@ clim_all = [0 35];
 figure
 for k = 1:length(spectra)
     subplot(2, 2, k)
-    imagesc(sin_theta, fd, spectra{k}); axis xy
+    imagesc(sin_theta, fd, spectra{k})
+    axis xy
     clim(clim_all)                         
-    xlabel('sin\theta'); ylabel('f_d (cycles/pulse)')
-    ylabel(colorbar, 'dB relative to P_n')
+    xlabel("sin\theta")
+    ylabel("f_d (cycles/pulse)")
+    ylabel(colorbar, "dB relative to P_n")
     title(labels{k})
 end
 
@@ -239,12 +232,15 @@ figure; hold on
 for k = 1:length(spectra)
     plot(fd, spectra{k}(:, c0), 'DisplayName', labels{k})
 end
-xlabel('f_d (cycles/pulse)'); ylabel('dB relative to P_n')
-title('MVDR spectrum at broadside (sin\theta = 0)'); legend show; grid on
+xlabel("f_d (cycles/pulse)")
+ylabel("dB relative to P_n")
+title("MVDR spectrum at broadside (sin\theta = 0)")
+legend show
+grid on
 
 % noise floor: the median over the map (the ridge is a small fraction of it)
 for k = 1:length(spectra)
-    fprintf('%-20s floor = %6.2f dB\n', labels{k}, median(spectra{k}(:)));
+    fprintf("%-20s floor = %6.2f dB\n", labels{k}, median(spectra{k}(:)));
 end
 
 %% compare detector performance OKD vs AMF vs NAMF vs TEN (Pd vs SCR)
@@ -325,7 +321,7 @@ title(sprintf("P_d vs SNR, K-distributed Clutter (a = %.1f, CNR = " + ...
 %     figHandle = allFigures(i);
 % 
 %     fileName = sprintf('fig%02d.png', figHandle.Number);
-%     fullPath = fullfile('figs', fileName); % Saves directly into the existing 'figs' directory
+%     fullPath = fullfile('figs', fileName); 
 % 
 %     exportgraphics(figHandle, fullPath, 'Resolution', 300);
 % end

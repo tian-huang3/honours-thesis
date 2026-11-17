@@ -272,7 +272,7 @@ Since $P_d$ and $P_{fa}$ cannot both be made arbitrarily small, radar target det
     y=\frac{f_{\vb x}(\vb x\mid H_1)}{f_{\vb x}(\vb x\mid H_0)}\;\underset{H_0}{\overset{H_1}{\gtrless}}\; \gamma,
     \label{eq:lrt}
 \end{equation}
-is the test that achieves the maximum probability of detection $P_d$, where the threshold $\gamma$ is set for a $P_{fa}$ deemed tolerable. It is the optimum detector when both probability densities in Equation~\eqref{eq:lrt} are known. In practice however, the probability densities depend on the interference statistics ($\m R$) and the complex amplitude $\alpha$ which are both unknown. The \acrfull{glrt} is the standard method used instead, in which each unknown parameter is replaced by its \gls{mle} \cite{Kay1998}. The \gls{glrt} forms the basis of most of the existing adaptive detectors \cite{Kelly1986, Chen1991, Kraut1999} which is reviewed in the next section.\\
+is the test that achieves the maximum probability of detection $P_d$, where the threshold $\gamma$ is set for a $P_{fa}$ deemed tolerable. It is the optimum detector when both probability densities in Equation~\eqref{eq:lrt} are known. In practice however, the probability densities depend on the interference statistics and the complex amplitude $\alpha$ which are both unknown. The \acrfull{glrt} is the standard method used instead, in which each unknown parameter is replaced by its \gls{mle} \cite{Kay1998}. The \gls{glrt} forms the basis of most of the existing adaptive detectors \cite{Kelly1986, Chen1991, Kraut1999} which is reviewed in the next section.\\
 
 \subsection{Constant False Alarm Rate (CFAR) Property}
 \label{sec:cfar}
@@ -285,21 +285,12 @@ The detectors reviewed in this section are all obtained from the \gls{lrt} or \g
 
 \subsection{Gaussian Adaptive Detectors}
 \label{sec:gaussian_detectors}
-The Gaussian adaptive detectors apply the \gls{glrt} under the Gaussian clutter assumption, in which $\vb x\sim\mc{CN}(\vb 0,\m R)$ under $H_0$ and $\vb x\sim\mc{CN}(\alpha\vb s,\m R)$ under $H_1$. If the interference covariance $\m R$ is known, the only unknown is the target amplitude $\alpha$, and replacing it with its \gls{mle} in the \gls{lrt} gives the \acrfull{wmf}
+Under the Gaussian clutter assumption, $\vb x\sim\mc{CN}(\vb 0,\m R)$ under $H_0$ and $\vb x\sim\mc{CN}(\alpha\vb s,\m R)$ under $H_1$, where both $\alpha$ and $\m R$ are unknown. To estimate $\m R$, $K$ training range gates $\vb z_1,\dots,\vb z_K$ surrounding the \gls{cut} are used. If these are Gaussian and \gls{iid} with the \gls{cut}, the \gls{mle} of $\m R$ is the \gls{scm}
 \begin{equation}
-    y_\text{WMF} = \frac{|\vb s^H\m R^{-1}\vb x|^2}{\vb s^H\m R^{-1}\vb s}\;\underset{H_0}{\overset{H_1}{\gtrless}}\; \gamma.
-    \label{eq:wmf}
-\end{equation}
-The \gls{wmf} whitens the data with $\m R^{-1}$ and then correlates it with the whitened steering vector. Under $H_0$, $y_\text{WMF}$ is exponentially distributed with unit mean whatever $\m R$ is, so $P_{fa}=e^{-\gamma}$ and the \gls{wmf} is \gls{cfar}.\\
-
-In practice, $\m R$ is unknown and must also be estimated. It is estimated from $K$ \emph{training} range gates $\vb z_1,\dots,\vb z_K$ surrounding the \gls{cut}. If the training gates are Gaussian, and \gls{iid} with the \gls{cut}, the \gls{mle} of $\m R$ is the \gls{scm}
-\begin{equation}
-    \hat{\m R} = \frac{1}{K}\sum_{k=1}^{K}\vb z_k\vb z_k^H,
+    \hat{\m R} = \frac{1}{K}\sum_{k=1}^{K}\vb z_k\vb z_k^H.
     \label{eq:scm}
 \end{equation}
-which is invertible only if $K\ge L$. Estimating $\m R$ costs performance. Reed, Mallett and Brennan showed that about $K\approx 2L$ homogeneous training gates are needed to keep the average loss within 3\,dB \cite{Reed1974}.\\
-
-Three well-known detectors follow from applying the \gls{glrt} to this problem in different ways, and are summarised in Table~\ref{tab:gaussian_detectors}. The \gls{amf} \cite{Chen1991} is a two-step \gls{glrt}: the \gls{wmf} is derived assuming $\m R$ is known, and the \gls{scm} is then substituted. Kelly's \gls{glrt} \cite{Kelly1986} is a one-step \gls{glrt}, in which $\alpha$ and $\m R$ are estimated jointly from the \gls{cut} and the training data. The \gls{namf} \cite{Kraut1999} is the \gls{glrt} obtained when the \gls{cut} is additionally allowed an unknown power relative to the training data. This normalises the statistic by the whitened power of the \gls{cut}, $\vb x^H\hat{\m R}^{-1}\vb x$, which makes it invariant to scaling of the \gls{cut}.
+Using the \gls{scm} as an estimate of the true covariance expectedly leads to a loss in performance. Reed, Mallett and Brennan \cite{Reed1974} showed that approximately $K=2L$ training gates are needed to keep this loss within 3\,dB.\\
 
 \vspace{5mm}
 \begin{table}[htbp]
@@ -318,14 +309,17 @@ Three well-known detectors follow from applying the \gls{glrt} to this problem i
     \end{tabular}
 \end{table}
 \vspace{5mm}
-All three detectors are \gls{cfar} when the clutter is Gaussian and homogeneous, since that is the model their likelihoods assume. In K-distributed clutter, however, each training gate has its own texture $\tau_k$, so the expected value of the \gls{scm} is
+
+Applying the \gls{glrt} to this problem in different ways leads to three well-known Gaussian adaptive detectors in Table~\ref{tab:gaussian_detectors}. The \gls{amf} \cite{Chen1991} is a two-step \gls{glrt}, in which the test is first derived using the \gls{lrt} for a known $\m R$ and $\hat{\m R}$ is then substituted in. Kelly's \gls{glrt} \cite{Kelly1986} instead estimates $\alpha$ and $\m R$ jointly from the \gls{cut} and the training data in a single step. The \gls{namf} \cite{Kraut1999} further allows the \gls{cut} to have an unknown power relative to the training data, and so normalises the statistic by $\vb x^H\hat{\m R}^{-1}\vb x$, making it invariant to the scaling of the \gls{cut}.\\
+
+All three detectors are \gls{cfar} when the clutter is Gaussian and homogeneous. In K-distributed clutter, however, each training gate has its own texture $\tau_k$, so the expected value of the \gls{scm} becomes
 \begin{equation}
     \bb E\big[\hat{\m R}\big] = \bar\tau\m G + \sigma^2\m I,
-    \qquad \bar\tau = \frac{1}{K}\sum_{k=1}^{K}\tau_k,
+    \qquad \bar\tau = \frac{1}{K}\sum_{k=1}^{K}\tau_k.
 \end{equation}
-which reflects the \emph{average} clutter power over the training gates rather than the texture of the \gls{cut}, and a single spiky training gate can dominate the sum. The \gls{amf} and Kelly's \gls{glrt} therefore lose the \gls{cfar} property, and all three detectors lose detection performance, since the likelihoods they are derived from do not describe the compound-Gaussian structure of the clutter \cite{Gini1998, Rosenberg2017}.
+Here, $\bar\tau$ can be dominated by the texture of a single spiky training gate. The \gls{amf} and Kelly's \gls{glrt} therefore lose the \gls{cfar} property, and all three detectors lose detection performance, since the likelihoods they are derived from do not describe the compound-Gaussian structure of the clutter \cite{Gini1998, Rosenberg2017}. \\
 
-\subsection{The Optimum K-distributed Detector}
+\subsection{The Optimum K-distributed Detector (OKD)}
 \label{sec:okd}
 The optimum detector for K-distributed clutter is instead derived from the \gls{lrt} with the compound-Gaussian model of Section~\ref{sec:kdist_clutter} in the likelihoods. Conditioned on the texture of the \gls{cut}, the data are Gaussian, so each likelihood is a Gaussian density averaged over the texture distribution $f_\tau$. Replacing the unknown target amplitude with its \gls{mle} gives the \gls{okd} of Gini \textit{et al.} \cite{Gini1998},
 \begin{equation}
@@ -341,48 +335,34 @@ where the quadratic forms
     q_1 = q_0 - \frac{|\vb s^H\m G^{-1}\vb x|^2}{\vb s^H\m G^{-1}\vb s}
     \label{eq:q0q1}
 \end{equation}
-are the whitened power of the \gls{cut}, and the whitened power remaining once the best-fitting target along $\vb s$ is removed. For gamma distributed texture and negligible noise, $h_L(q)$ has the closed form
-\begin{equation}
-    h(q) \propto q^{\frac{a-L}{2}}\,K_{L-a}\big(2\sqrt{aq}\big),
-\end{equation}
-where $K_{L-a}(\cdot)$ is again the modified Bessel function of the second kind. When thermal noise is included, $\m R=\tau\m G+\sigma^2\m I$ and no closed form exists, so the integral in \eqref{eq:okd} must be evaluated numerically.\\
+are the whitened power of the \gls{cut}, and the whitened power remaining once the best-fitting target along $\vb s$ is removed. \\
 
-Because it is similarly built on the exact likelihoods, the \gls{okd} gives the best possible detection performance in K-distributed clutter. However, it is \emph{clairvoyant} since it requires the speckle covariance $\m G$ and the texture distribution $f_\tau$, including the shape parameter $a$, to be known exactly. Neither is known in practice.\\
+Similarly to the Gaussian adaptive detectors, the \gls{okd} is built on the exact likelihoods, and hence gives the best possible detection performance in K-distributed clutter. However, it is \emph{clairvoyant} since it requires the speckle covariance $\m G$ and the texture distribution $f_\tau$ to be known exactly, as written in the equations above. Neither are known in practice.\\
 
 \subsection{Practical Approaches in Heterogeneous Clutter}
 \label{sec:practical}
-Several practical detectors reduce the need for large amounts of homogeneous training data. They keep an \gls{amf}-type statistic and change only how the covariance is estimated.
+Several practical detectors have been developed which reduce the amount of homogeneous training data needed to estimate the covariance matrix, but keep the AMF-type statistic.
 \begin{itemize}
-    \item \textbf{\Gls{sds} detectors} \cite{Aboutanios2005, Aboutanios2019} estimate the covariance from the \gls{cut} alone, using lower-dimensional snapshots formed from sub-windows of the \gls{cut} in space and time. No training data is needed, so heterogeneity across range has no effect, at the cost of fewer degrees of freedom.
-    \item \textbf{Hybrid detectors} \cite{Aboutanios2010} combine the single data set estimate with an estimate from training gates screened to resemble the \gls{cut}.
+    \item \textbf{\Gls{sds} detectors} \cite{Aboutanios2005, Aboutanios2019} estimate the covariance from the \gls{cut} alone, using snapshots formed from windows of just the \gls{cut} in space and time. No training data is used.
+    \item \textbf{Hybrid detectors} \cite{Aboutanios2010} combine the single data set estimate with an estimate from training gates screened to resemble the \gls{cut}, thus reducing heterogeneity.
 \end{itemize}
-Both improve on the Gaussian detectors, but they are derived under a Gaussian model, so the variation of the texture appears to them simply as a variation in power. The \gls{ten} method, reviewed next, is designed specifically for K-distributed clutter.
-
+Both improve on the Gaussian detectors, but they are still derived under a Gaussian model. The \gls{ten} method, reviewed next, is designed specifically for K-distributed clutter.\\
 
 \subsubsection{The Texture Estimation and Normalisation (TEN) Method}
 \label{sec:ten}
-The \gls{ten} method of Aboutanios and Rosenberg \cite{Aboutanios2020} is a practical, adaptive detector for K-distributed clutter. Neglecting thermal noise, each training gate is modelled as $\vb z_k\sim\mc{CN}(\vb 0,\tau_k\m G)$ and the \gls{cut} as $\vb x\sim\mc{CN}(\vb 0,\tau_0\m G)$ under $H_0$, so the heterogeneity is confined to the texture. The idea is to estimate the texture of each training gate relative to that of the \gls{cut} and normalise it out, so that \emph{all} the training data can be used.
+The \gls{ten} method \cite{Aboutanios2020} is a practical, adaptive detector derived for K-distributed clutter. Neglecting thermal noise, each training gate is modelled as $\vb z_k\sim\mc{CN}(\vb 0,\tau_k\m G)$ and the \gls{cut} as $\vb x\sim\mc{CN}(\vb 0,\tau_0\m G)$ under $H_0$, so the heterogeneity is confined to the texture. The idea is to estimate the texture of each training gate relative to that of the \gls{cut} and normalise it out, so that \emph{all} the training data can be used.
 
-Single data set covariance estimates $\hat{\m Q}$ of the \gls{cut} and $\hat{\m R}_k$ of each training gate are first formed \cite{Aboutanios2005}. Since the texture factors out of each estimate, the texture ratio is estimated by
+The \gls{sds} method to estimate covariances $\hat{\m Q}$ of the \gls{cut} and $\hat{\m R}_k$ of each training gate are first formed \cite{Aboutanios2005}. Since the texture factors out of each estimate, the texture ratio is estimated by
 \begin{equation}
     \zeta_k = \frac{1}{L}\tr\!\big(\hat{\m Q}^{-1}\hat{\m R}_k\big) \approx \frac{\tau_k}{\tau_0}.
     \label{eq:ten_ratio}
 \end{equation}
-Each training estimate is then rescaled by $1/\zeta_k$, which gives it the texture of the \gls{cut}, and pooled with $\hat{\m Q}$ to form
+Each training estimate is then rescaled by $1/\zeta_k$, which gives it the texture of the \gls{cut}, and essentially averaged with $\hat{\m Q}$ to form
 \begin{equation}
     \hat{\m\Sigma}_\text{TEN} = \frac{1}{2K-1}\left((K-1)\hat{\m Q} + \sum_{k=1}^{K}\frac{\hat{\m R}_k}{\zeta_k}\right) \approx \tau_0\m G,
     \label{eq:ten_cov}
 \end{equation}
-which is used in place of $\hat{\m R}$ in the \gls{amf} statistic. Note that the method recovers only the texture \emph{ratios} and the product $\tau_0\m G$. Neither the speckle covariance $\m G$ nor the individual textures $\tau_k$, and hence their distribution, are recovered, yet these are exactly what the \gls{okd} requires.
-
-The method assumes that $\m G$ is the same in every range gate and that thermal noise is negligible. With noise, $\tau_k\m G+\sigma^2\m I$ is no longer a scaled version of a single matrix and \eqref{eq:ten_ratio} is only approximate. Moreover, although the method performs well in K-distributed clutter \cite{Aboutanios2020}, the forms of \eqref{eq:ten_ratio} and \eqref{eq:ten_cov} are not derived from a formal optimality principle, which is one of the questions addressed in this thesis.
-
-\newpage
-\chapter{Research Outline}
-\label{ch:research_outline}
-
-\section{Summary and Research Gap}\label{sec:gap}
-The detectors reviewed in the last chapter are compared in Table~\ref{tab:detector_comparison}. The adaptive Gaussian detectors, the single data set, hybrid and reduced-rank approaches are practical, but they do not use the compound-Gaussian structure of the clutter. The texture-independent detectors and the \gls{ten} method use part of that structure, the texture of each range gate, but not its distribution. Only the \gls{okd} uses the full K-distributed model, and it is not practical.
+which is used in place of $\hat{\m R}$ in the \gls{amf} statistic. Note that this method recovers only the texture \emph{ratios} and the product $\tau_0\m G$. The speckle covariance $\m G$ and the individual textures $\tau_k$ are not explicitly recovered, which is what the \gls{okd} requires. \\
 
 \vspace{5mm}
 \begin{table}[htbp]
@@ -398,7 +378,7 @@ The detectors reviewed in the last chapter are compared in Table~\ref{tab:detect
         \acrshort{amf} \cite{Chen1991} & Gaussian & \acrshort{scm} & $\approx 2L$ alike gates & No \\
         Kelly's \acrshort{glrt} \cite{Kelly1986} & Gaussian & \acrshort{scm} & $\approx 2L$ alike gates & No \\
         \acrshort{namf} \cite{Kraut1999} & Gaussian & \acrshort{scm} & $\approx 2L$ alike gates & No \\
-        \acrshort{sds} \cite{Aboutanios2005, Aboutanios2019} & Gaussian & \acrshort{cut} sub-windows & None & No \\
+        \acrshort{sds} \cite{Aboutanios2005, Aboutanios2019} & Gaussian & \acrshort{cut} windowed & None & No \\
         Hybrid \cite{Aboutanios2010} & Gaussian & \acrshort{cut} + screened & Reduced & No \\
         \acrshort{ten} \cite{Aboutanios2020} & K-distributed & Texture-normalised & All gates, rescaled & No \\
         \acrshort{okd} \cite{Gini1998} & K-distributed & True $\m G$ (clairvoyant) & -- & Yes \\
@@ -407,20 +387,27 @@ The detectors reviewed in the last chapter are compared in Table~\ref{tab:detect
 \end{table}
 \vspace{5mm}
 
-The \gls{ten} method recovers the texture \emph{ratios} and the product $\tau_0\m G$, but never $\m G$ and the texture distribution separately, which are what the \gls{okd} requires. None of the practical approaches above therefore implements the optimum structure of the \gls{okd}, and the gap between the clairvoyant benchmark and what can be achieved with the data available to a real radar remains open. This gap motivates the objectives set out in Section~\ref{sec:objectives}.
+\subsubsection{Summary}
+Table~\ref{tab:detector_comparison} provides a summary of the existing detectors reviewed in this section. Whilst the adaptive Gaussian detectors, the single data set, hybrid and reduced-rank approaches are practical, they do not use the compound-Gaussian structure of the clutter. The \gls{ten} method on the other hand does assume the compound-Gaussian clutter model, however does not take advantage of the optimum structure of the \gls{okd}. Thus, there does not exist any practical implementation of the \gls{okd} structure which motivates the objectives outlined in the next chapter.
+
+\newpage
+\chapter{Research Outline}
+\label{ch:research_outline}
 
 \section{Research Objectives}
 \label{sec:objectives}
-The aim of this thesis is therefore to investigate a practical implementation of the \acrfull{okd} for K-distributed clutter. This can be broken down into three main sub-objectives:
+The aim of this thesis is therefore to investigate a practical implementation of the \acrfull{okd} for K-distributed clutter. This is broken down into three main sub-objectives:
 \begin{enumerate}
-    \item \textbf{Benchmark the \gls{okd}.} Develop a simulator for K-distributed clutter and implement the clairvoyant \gls{okd} alongside the Gaussian adaptive detectors, so that the best achievable performance is established as a benchmark.
-    \item \textbf{Implement the \gls{okd} with an estimated covariance.} Replace the true speckle covariance in the \gls{okd} with the \gls{scm} estimated from training data, both with and without first removing the texture from the training cells, and determine how much performance is lost and whether the detector remains \gls{cfar}.
-    \item \textbf{Understand the \gls{ten} method and combine it with the \gls{okd}.} The \gls{ten} method \cite{Aboutanios2020} performs well in K-distributed clutter, but the reasoning behind its construction is not made explicit. Investigate how and why it works, and identify the principle from which it can be derived. Building on this, investigate whether the \gls{ten} method can be combined with the structure of the \gls{okd}, so that neither the texture nor the speckle covariance needs to be estimated explicitly.
+    \item \textbf{Benchmark the \gls{okd}.} This requires developing a simulator for K-distributed clutter and then implementing the clairvoyant \gls{okd} alongside the Gaussian adaptive detectors, so that the best achievable performance is established as a benchmark.
+    \item \textbf{Implement the \gls{okd} with an estimated covariance.} This involves replacing the true speckle covariance in the \gls{okd} with the \gls{scm} estimated from training data. This can be done both with and without first removing the texture from the training cells. The purpose is to investigate how much performance is lost and whether the detector remains \gls{cfar}.
+    \item \textbf{Understand the \gls{ten} method and combine it with the \gls{okd}.} This involves investigating how and why the \gls{ten} method \cite{Aboutanios2020} works, since it performs well in K-distributed clutter but the reasoning behind its construction is not made explicit. Building on this, the principle from which it can be derived may be helpful and make it possible to combine with the structure of the \gls{okd}.
 \end{enumerate}
-Each detector is evaluated by Monte Carlo simulation in K-distributed clutter. The \gls{cfar} property is assessed from the false-alarm probability as a function of the threshold, and detection performance is assessed from $P_d$ as a function of the \gls{scr} at a fixed $P_{fa}$, compared against the clairvoyant \gls{okd}, the \gls{amf}, the \gls{namf} and the \gls{ten} detector.
+
+Each objectives is first investigated in simulation, where the true speckle covariance and texture are known. Later along, they may be evaluated on real sea clutter data.
 
 \newpage
 \chapter{Preliminary Work}
+\label{ch:preliminary_work}
 This chapter describes the work completed so far towards the first two sub-objectives: a validated simulator for K-distributed clutter, and an initial investigation into the effect of replacing the true covariance with the \gls{scm}.
 
 \section{K-distributed Clutter Simulator}\label{sec:simulator}
@@ -475,7 +462,7 @@ The \texttt{gen\_clutter\_data.m} function was adapted from MATLAB code provided
 \end{table}
 \vspace{5mm}
 
-For $N_r$ range gates, the simulator returns the clutter-plus-noise snapshots $\vv\varsigma=\vb c+\vb n$, built from \eqref{eq:clutter_patches}. It also returns three quantities that are unknown in practice: the true speckle covariance $\m G$, the texture $\tau$ for every range gate, and the clutter-only data $\vb c$. We later use these in the clairvoyant detectors to compare performance against the practical detectors. The simulation parameters used are listed in Table~\ref{tab:sim_params}, and the code is listed in Appendix~\ref{app:gen_clutter}.\\
+For $N_r$ range gates, the simulator returns the clutter-plus-noise snapshots $\vv\varsigma=\vb c+\vb n$, built from \eqref{eq:clutter_patches}. It also returns three quantities that are unknown in practice: the true speckle covariance $\m G$, the texture $\tau$ for every range gate, and the clutter-only data $\vb c$. We later use these in the clairvoyant detectors to compare performance against the practical detectors. The simulation parameters\footnote{The parameters were mostly arbitrarily chosen but they are listed so results can be reproduced. They also set the dimensions $L=NM$ and the position of the clutter ridge that the later results depend on.} used are listed in Table~\ref{tab:sim_params}, and the code is listed in Appendix~\ref{app:gen_clutter}.\\
 
 \begin{figure}[htbp]
     \centering
@@ -503,28 +490,21 @@ which is a linear filter that gives the minimum output power of a filter (with u
 \vspace{5mm}
 % NEED TO CHECK CNR 20dB maybe edit
 
-\newpage
 \section{Gaussian Detectors versus the Clairvoyant OKD}\label{sec:detector_results}
-With the K-distributed clutter simulator implemented and validated, it was used to verify the performance degradation of the classical Gaussian detectors in K-distributed clutter, and to compare them with the clairvoyant \gls{okd} benchmark. It is examined whether the \gls{amf} and \gls{namf} remain \gls{cfar} in K-distributed clutter, and how their detection performance compares with the clairvoyant \gls{okd}.
+With the K-distributed clutter simulator implemented and validated, it was used to verify the performance degradation of the classical Gaussian detectors in K-distributed clutter, and to compare them with the clairvoyant \gls{okd} benchmark.\\
 
-A Monte Carlo framework was implemented for this purpose (Appendix~\ref{app:run_trials}). In each trial, $K+1$ new range gates are simulated: the first is the \gls{cut}, with a target $\alpha\vb s$ added when $H_1$ is tested, and the remaining $K$ are training data. The \gls{amf} and \gls{namf} are computed using the \gls{scm} of the training gates, while the clairvoyant \gls{wmf} and the \gls{okd}\footnote{The texture integral of the \gls{okd} is evaluated numerically, since no closed form exists with thermal noise.} are given the true speckle covariance. 
+A Monte Carlo simulation was conducted, with the code listed in Appendix~\ref{app:run_trials}). In each trial, $K+1$ new range gates are simulated: the first is the \gls{cut}, with a target $\alpha\vb s$ added when $H_1$ is tested, and the remaining $K$ are training data. The \gls{amf} and \gls{namf} are computed using the \gls{scm} of the training gates, while the clairvoyant (CLV) detector, which is the \gls{amf} with $\hat{\m R}$ replaced by the true $\m R$, and the \gls{okd}\footnote{The texture integral of the \gls{okd} is evaluated numerically, since no closed form exists with thermal noise.} are given the true speckle covariance. The threshold of each detector is set from target-free trials to give $P_{fa}=10^{-2}$, and $P_d$ is then estimated over a range of \gls{snr}s. The resulting curves are shown in Figure~\ref{fig:pd_vs_snr}.
 
 \vspace{5mm}
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{figs/pd_vs_snr.png}
-    \caption{Probability of detection against \gls{snr} for the clairvoyant \gls{wmf} (CLV), the \gls{okd}, the \gls{namf} and the \gls{amf} in K-distributed clutter ($a=1$, \gls{cnr} = 20\,dB, $K=2L$, target at broadside with $f_d=0.04$, $P_{fa}=10^{-2}$, 2000 trials).}
+    \includegraphics[width=0.9\linewidth]{figs/pd_vs_SNR.png}
+    \caption{Probability of detection against \gls{snr} for the clairvoyant detector (CLV), the \gls{okd}, the \gls{namf} and the \gls{amf} in K-distributed clutter ($a=b=1$, \gls{cnr} = 20\,dB, $K=2L$, target at broadside with $f_d=0.04$, $P_{fa}=10^{-2}$, 2000 trials).}
     \label{fig:pd_vs_snr}
 \end{figure}
 \vspace{5mm}
 
-% \begin{figure}[htbp]
-%     \centering
-%     \includegraphics[width=\linewidth]{figs/pfa_vs_threshold.png}
-%     \caption{Probability of false alarm against threshold for the \gls{amf} (left) and the \gls{namf} (right), in Gaussian clutter and in K-distributed clutter with $a=0.5$, $1$ and $5$ (\gls{cnr} = 20\,dB, $K=2L$, 10\,000 trials, steering vector at broadside with $f_d=0$). A detector is \gls{cfar} if its curves coincide for every clutter distribution.}
-%     \label{fig:pfa_vs_threshold}
-% \end{figure}
-
+The \gls{okd} and the clairvoyant detector perform almost identically, and both reach $P_d=0.5$ at approximately 2.5 dB lower \gls{snr} than the \gls{amf} and \gls{namf}. However, this performance difference is the result of two separate losses combined. The \gls{amf} and \gls{namf} are limited both by the Gaussian assumption in their structure, and by the \gls{scm}. Separating these two losses is the focus of the second sub-objective, and also leads the next section.
 
 \newpage
 \section{Sample vs True Covariance}\label{sec:scm_vs_true}
@@ -539,7 +519,7 @@ The second sub-objective was to evaluate the effect of the \gls{scm} as an estim
 \end{figure}
 \vspace{5mm}
 
-The clutter ridge is preserved in every case, but with small sample support the spectrum is noisier and its floor is lower. This was computed to be $-10.56$\,dB, $-2.67$\,dB and $-0.17$\,dB for $K=L+10$, $2L$ and $10L$ respectively. As $K$ increases, the \gls{scm} spectrum is seen to approach that of the true covariance.\\
+The clutter ridge is preserved in every case, but when there is small sample support, the spectrum is noisier and its floor is lower. This was computed to be $-10.56$\,dB, $-2.67$\,dB and $-0.17$\,dB for $K=L+10$, $2L$ and $10L$ respectively. As $K$ increases, the \gls{scm} spectrum is seen to approach that of the true covariance.\\
 
 These results quantify the loss of the \gls{scm} in a \emph{linear} filter. The next step is to determine what the \gls{scm} costs when it replaces $\m G$ inside the non-linear \gls{okd}, both with and without first removing the texture from the training gates, and whether the resulting detector remains \gls{cfar}.
 
@@ -559,37 +539,16 @@ The projected timeline is shown in Figure~\ref{fig:gantt}. The approach is open-
 
 \paragraph{Thesis A (Term 3, 2026).} The literature review and the clutter simulator have been completed, and the comparison of the sample and true covariance has begun. The \gls{amf}, \gls{namf} and \gls{okd} have been implemented in a Monte Carlo framework.
 
-\paragraph{Thesis B (Term 1, 2027).} The first half of the term addresses the first sub-objective: Monte Carlo comparison of the clairvoyant \gls{okd} with the \gls{amf} and \gls{namf}, producing $P_{fa}$ against threshold and $P_d$ against \gls{scr} curves for a range of shape parameters. The second half addresses the second sub-objective: the \gls{okd} with the \gls{scm}, with and without texture removal, and its \gls{cfar} behaviour. The study of how and why the \gls{ten} method works also begins in this term.
+\paragraph{Thesis B (Term 1, 2027).} The first half of the term addresses the first sub-objective to conduct a Monte Carlo comparison of the clairvoyant \gls{okd} with the \gls{amf} and \gls{namf}. The second half addresses the second sub-objective which is investigating the \gls{okd} with the \gls{scm}, with and without texture removal, and its \gls{cfar} behaviour. It would also be an aim to study of how and why the \gls{ten} method works during Thesis B.
 
-\paragraph{Thesis C (Term 2, 2027).} The third sub-objective, combining the \gls{ten} method with the \gls{okd}, is the main focus. If time allows, the detectors will also be tested on measured sea clutter data, such as that from the Ingara radar used in \cite{Aboutanios2020}. The remainder of the term is spent on analysing the results, the poster and the final report.
-
-\section{Risks}
-The main risks to the project and the plans to mitigate them are listed in Table~\ref{tab:risks}.
-
-\begin{table}[htbp]
-    \centering
-    \caption{Main project risks and mitigations.}
-    \label{tab:risks}
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{@{}p{0.42\linewidth} p{0.52\linewidth}@{}}
-        \hline
-        Risk & Mitigation \\
-        \hline
-        Simulating low false-alarm probabilities requires many Monte Carlo trials, which is slow for $L=128$. & Vectorise the code, start at $P_{fa}=10^{-3}$ \cite{Aboutanios2020}, and use a smaller $L$ during development. \\
-        With thermal noise, the \gls{okd} requires a numerical integral for every test cell, which may be inaccurate or slow. & The integral is evaluated in the eigenbasis of $\m G$ in the log domain; it will be checked against the closed form in the noise-free case. \\
-        Combining the \gls{ten} method with the \gls{okd} may not lead to a tractable detector. & Treated as an extension; the first two sub-objectives stand on their own. \\
-        Access to measured sea clutter data is not guaranteed. & Treated as a stretch goal; all core results use simulated data. \\
-        \hline
-    \end{tabular}
-\end{table}
+\paragraph{Thesis C (Term 2, 2027).} The third sub-objective, combining the \gls{ten} method with the \gls{okd}, is the main focus. If time allows, the detectors will also be tested on real sea clutter data. The remainder of the term is spent on analysing the results, the poster and the final report.
 
 \section{Skills Developed}
-The work so far has required learning new material beyond the undergraduate curriculum, in particular:
+The work undertaken in Thesis A and what will be continued in Thesis B and C has and will require learning new skills. In particular:
 \begin{itemize}
-    \item statistical detection and estimation theory, including the Neyman-Pearson lemma, the \gls{glrt} and maximum likelihood covariance estimation;
-    \item multichannel radar and \gls{stap} signal processing, including the space-time signal model and clutter modelling;
-    \item Monte Carlo simulation of radar detectors in MATLAB;
-    \item technical writing and typesetting in \LaTeX.
+    \item Statistical detection and estimation theory, such as the Neyman-Pearson lemma, the \gls{lrt} and maximum likelihood covariance estimation;
+    \item Multichannel radar and \gls{stap} signal processing, including the space-time signal model and clutter modelling;
+    \item Developing Monte Carlo simulation of radar detectors and general signal processing in MATLAB;
 \end{itemize}
 
 %% ----- Conclusion ----- %%

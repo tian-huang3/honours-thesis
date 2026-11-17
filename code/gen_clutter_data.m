@@ -89,7 +89,7 @@ nv = (0:N - 1).';
 mv = (0:M - 1).';
 
 SSc = zeros(NM, Ntheta);                     % L x Ntheta patch steering matrix (each column is the 
-                                            % N x M (=L) spatio-temporal steering matrix for each patch)
+                                             % N x M (=L) spatio-temporal steering matrix for each patch)
 for patch = 1:Ntheta
     s_sp = exp(1i * 2 * pi * fs(patch) * nv);
     s_temp = exp(1i * 2 * pi * fd(patch) * mv);
